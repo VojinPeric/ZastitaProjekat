@@ -13,20 +13,20 @@ class SignedMessage:
     __slots__ = ("rawMessage", "signature")
 
     def __init__(self):
-        self.rawMessage = {}
-        self.signature = ""
+        self.rawMessage = bytes()
+        self.signature = bytes()
 
 class CompressedMessage:
     __slots__ = ("msg")
 
     def __init__(self):
-        self.msg = ""
+        self.msg = bytes()
 
 class EncryptedMessage:
     __slots__ = ("msg")
 
     def __init__(self):
-        self.msg = ""
+        self.msg = bytes()
 
 class EncodedMessage:
     __slots__ = ("msg")
