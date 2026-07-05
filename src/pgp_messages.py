@@ -5,6 +5,11 @@ should just send array of bytes forward.
 """
 
 from datetime import datetime, timezone
+from enum import Enum
+
+class AlgorithmSymmetric(Enum):
+    AES = "AES128"
+    DES3 = "DES3"
 
 class Message:
     __slots__ = ("msg", "filename", "timestamp")
@@ -25,9 +30,11 @@ class SignedMessage:
         self.timestamp = datetime.now(timezone.utc)
 
 class EncryptedMessage:
-    __slots__ = ("msg", "encryptedSessionKey", "keyId")
+    __slots__ = ("msg", "encryptedSessionKey", "keyId", "algorythm", "iv")
 
     def __init__(self):
         self.msg = bytes()
         self.encryptedSessionKey = bytes()
+        self.iv = bytes()
         self.keyId = bytes()
+        self.algorythm = AlgorithmSymmetric.AES
