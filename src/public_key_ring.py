@@ -2,7 +2,7 @@
 Public key ring for the PGP scheme.
 
 The ring is one JSON table: each row is a public key someone has added,
-plus the owner-trust / legitimacy bookkeeping needed to decide how much to
+plus the owner-trust needed to decide how much to
 trust certificates that chain through other people's signatures. It is a
 singleton because the process only ever works against a single ring file
 at a time - we can read anyone's public key to check signatures, but only
