@@ -19,7 +19,7 @@ def test_add_user_returns_populated_user(ring_folder):
 
     assert user.username == "alice"
     assert user.email == "alice@example.com"
-    assert user.message_box_folder_path == "/mailbox/alice"
+    assert user.folder_path == "/mailbox/alice"
 
 
 def test_duplicate_username_rejected(ring_folder):
@@ -62,7 +62,7 @@ def test_users_file_has_expected_json_shape(ring_folder):
     assert data == [{
         "Username": "alice",
         "Email": "alice@example.com",
-        "MessageBoxFolderPath": "/mailbox/alice",
+        "FolderPath": "/mailbox/alice",
     }]
 
 
@@ -76,4 +76,4 @@ def test_users_reload_from_disk_after_singleton_reset(ring_folder):
     assert len(reloaded.users) == 1
     assert reloaded.users[0].username == "alice"
     assert reloaded.users[0].email == "alice@example.com"
-    assert reloaded.users[0].message_box_folder_path == "/mailbox/alice"
+    assert reloaded.users[0].folder_path == "/mailbox/alice"
