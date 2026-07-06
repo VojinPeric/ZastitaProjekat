@@ -42,7 +42,7 @@ class UserRing:
 
     _instance = None
 
-    def __new__(cls, folder_path: str):
+    def __new__(cls, folder_path: str = None):
         if cls._instance is None:
             instance = super().__new__(cls)
             instance._setup(folder_path)
@@ -50,6 +50,8 @@ class UserRing:
         return cls._instance
 
     def _setup(self, folder_path: str) -> None:
+        if folder_path is None:
+            raise ValueError("Folder Path must be provided")
         self.folderPath = folder_path
         self.filePath = os.path.join(folder_path, RING_FILENAME)
 
@@ -61,8 +63,6 @@ class UserRing:
 
     @classmethod
     def resetSingleton(cls) -> None:
-        """Test-only escape hatch: forget the cached instance so a fresh
-        folder_path can be used to build a new one."""
         cls._instance = None
 
     # -----------------------------------------------------------------

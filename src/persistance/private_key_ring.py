@@ -17,16 +17,12 @@ from datetime import datetime, timezone
 
 from cryptography.hazmat.primitives import serialization
 
+
 from persistance import user as user_module
+from persistance import key_ring_utils as utils
 from services.pem_service import PEMService
 
 RING_FILENAME = "private_key_ring.json"
-
-
-def _keyIdFromPublicKeyPem(publicKeyPem: bytes) -> bytes:
-    publicKey = serialization.load_pem_public_key(publicKeyPem)
-    modulus = publicKey.public_numbers().n
-    return (modulus % (2 ** 64)).to_bytes(8, "big")
 
 
 @dataclass
@@ -68,7 +64,7 @@ class PrivateKeyRing:
 
     _instance = None
 
-    def __new__(cls, folder_path: str):
+    def __new__(cls, folder_path: str = None):
         if cls._instance is None:
             instance = super().__new__(cls)
             instance._setup(folder_path)
@@ -76,6 +72,8 @@ class PrivateKeyRing:
         return cls._instance
 
     def _setup(self, folder_path: str) -> None:
+        if folder_path is None:
+            raise ValueError("Folder Path must be provided")
         self.folderPath = folder_path
         self.filePath = os.path.join(folder_path, RING_FILENAME)
 
@@ -87,8 +85,6 @@ class PrivateKeyRing:
 
     @classmethod
     def resetSingleton(cls) -> None:
-        """Test-only escape hatch: forget the cached instance so a fresh
-        folder_path can be used to build a new one."""
         cls._instance = None
 
     # -----------------------------------------------------------------
@@ -105,7 +101,7 @@ class PrivateKeyRing:
             json.dump([row.to_dict() for row in rows], file, indent=2)
 
     # -----------------------------------------------------------------
-    # lookup / authorization
+    # read
     # -----------------------------------------------------------------
 
     def findByKeyId(self, keyId: bytes) -> PrivateKeyRingRow | None:
@@ -131,7 +127,7 @@ class PrivateKeyRing:
         return [row for row in self.rows if row.user_email == user_module.active_user.email]
 
     # -----------------------------------------------------------------
-    # add (generate or import)
+    # add
     # -----------------------------------------------------------------
 
     def generateKeyPair(self, keySize: int, password: bytes) -> PrivateKeyRingRow:
@@ -149,7 +145,7 @@ class PrivateKeyRing:
         return self._storeKeyPair(publicPem, privatePem, password)
 
     def _storeKeyPair(self, publicPem: bytes, privatePem: bytes, password: bytes) -> PrivateKeyRingRow:
-        keyId = _keyIdFromPublicKeyPem(publicPem)
+        keyId = utils.keyIdFromPublicKeyPem(publicPem)
         privateKey = serialization.load_pem_private_key(privatePem, password=None)
         encryptedPrivateKeyPem = privateKey.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -181,7 +177,8 @@ class PrivateKeyRing:
         self._writeRows(self.rows)
 
         from persistance.public_key_ring import PublicKeyRing  # deferred: avoids circular import
-        PublicKeyRing(self.folderPath).deleteAllRowsForKeyId(keyId)
+        # mimics the network broadcast to all peers that a key is deleted so they should invalidate their entries in PubKR
+        PublicKeyRing(self.folderPath).deleteAllRowsForKeyId(keyId) 
         return True
 
     # -----------------------------------------------------------------

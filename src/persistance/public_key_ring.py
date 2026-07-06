@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 from cryptography.hazmat.primitives import serialization
 
 from persistance import user as user_module
+from persistance import key_ring_utils as utils
 from services.pem_service import PEMService
 from persistance.private_key_ring import PrivateKeyRing
 from services.authentication_service import AuthenticationService
@@ -113,7 +114,7 @@ class PublicKeyRing:
 
     _instance = None
 
-    def __new__(cls, folder_path: str):
+    def __new__(cls, folder_path: str = None):
         if cls._instance is None:
             instance = super().__new__(cls)
             instance._setup(folder_path)
@@ -121,6 +122,8 @@ class PublicKeyRing:
         return cls._instance
 
     def _setup(self, folder_path: str) -> None:
+        if folder_path is None:
+            raise ValueError("Folder Path must be provided")
         self._authService = AuthenticationService()
         self.folderPath = folder_path
         self.filePath = os.path.join(folder_path, RING_FILENAME)
@@ -133,8 +136,6 @@ class PublicKeyRing:
 
     @classmethod
     def resetSingleton(cls) -> None:
-        """Test-only escape hatch: forget the cached instance so a fresh
-        folder_path can be used to build a new one."""
         cls._instance = None
 
     # -----------------------------------------------------------------
@@ -151,7 +152,7 @@ class PublicKeyRing:
             json.dump([row.to_dict() for row in rows], file, indent=2)
 
     # -----------------------------------------------------------------
-    # row lookup
+    # read
     # -----------------------------------------------------------------
 
     def _findRowByKeyId(self, keyId: bytes) -> PublicKeyRingRow | None:
@@ -172,7 +173,7 @@ class PublicKeyRing:
         return [row for row in self.rows if row.user_email == user_module.active_user.email]
 
     # -----------------------------------------------------------------
-    # add / delete
+    # add
     # -----------------------------------------------------------------
 
     def addRow(self, publicKeyPath: str, keySize: int, ownerEmail: str, ownerTrust: int) -> PublicKeyRingRow:
@@ -188,7 +189,7 @@ class PublicKeyRing:
         if publicKey.key_size != keySize:
             raise ValueError(f"imported key size {publicKey.key_size} does not match expected {keySize}")
 
-        keyId = self._keyIdFromPublicKeyPem(publicKeyPem)
+        keyId = utils.keyIdFromPublicKeyPem(publicKeyPem)
 
         row = PublicKeyRingRow(
             timestamp=datetime.now(timezone.utc),
@@ -204,6 +205,10 @@ class PublicKeyRing:
         self.rows.append(row)
         self._writeRows(self.rows)
         return row
+
+    # -----------------------------------------------------------------
+    # delete
+    # -----------------------------------------------------------------
 
     def deleteRow(self, keyId: bytes) -> bool:
         """Delete the row for keyId, only if active_user is its owner (the
@@ -247,10 +252,9 @@ class PublicKeyRing:
         if row is None:
             raise ValueError(f"no public key ring row for keyId {rowKeyId.hex()}")
 
-        if not self._canSign(row):
+        if not self._canSign(row, signerKeyId):
             raise PermissionError(
-                "active_user must own this row, or must have already added "
-                "this key owner's key under their own ring"
+                "active_user must own this row, or must have already added the signing key in PubKR"
             )
 
         privateKeyRing = PrivateKeyRing(self.folderPath)
@@ -285,12 +289,21 @@ class PublicKeyRing:
         self._writeRows(self.rows)
         return signature
 
-    def _canSign(self, row: PublicKeyRingRow) -> bool:
+    def _canSign(self, row: PublicKeyRingRow, signerKeyId: bytes) -> bool:
         activeUserEmail = user_module.active_user.email
         if row.user_email == activeUserEmail:
             return True
+        """
+        If active user isn't signing his own row, then active user must have a row which was added
+        by the current row owner and at the same time it is the exact public key with which you want 
+        to sign, because owner trust sets the trust in that specific owners key
+        """
+        # if active user isn't signing his own row, then active user must have a row which was added
+        # by 
         return any(
-            other.owner_email == row.owner_email and other.user_email == activeUserEmail
+            other.owner_email == activeUserEmail 
+            and other.user_email == row.user_email 
+            and signerKeyId == other.key_id
             for other in self.rows
         )
 
@@ -317,9 +330,3 @@ class PublicKeyRing:
             for sig in row.signatures
         )
         row.key_legitimacy = 1 if weightSum > LEGITIMACY_THRESHOLD else 0
-
-    @staticmethod
-    def _keyIdFromPublicKeyPem(publicKeyPem: bytes) -> bytes:
-        publicKey = serialization.load_pem_public_key(publicKeyPem)
-        modulus = publicKey.public_numbers().n
-        return (modulus % (2 ** 64)).to_bytes(8, "big")
