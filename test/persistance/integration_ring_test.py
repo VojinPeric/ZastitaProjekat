@@ -6,8 +6,7 @@ don't belong in a single ring's own test file.
 
 import pytest
 
-from persistance import user as user_module
-from persistance.user import UserRing
+from persistance.user import UserRing, UserService
 from persistance.private_key_ring import PrivateKeyRing
 from persistance.public_key_ring import PublicKeyRing, FULL_TRUST_THRESHOLD
 from services.pem_service import PEMService
@@ -30,15 +29,15 @@ def test_key_legitimacy_reaches_full_trust_after_two_full_trust_signatures(ring_
     private_ring = PrivateKeyRing(ring_folder)
     public_ring = PublicKeyRing(ring_folder)
 
-    user_module.active_user = carol
+    UserService().login(carol.username)
     carol_row = private_ring.generateKeyPair(KEY_SIZE, b"carol-pw")
 
-    user_module.active_user = dave
+    UserService().login(dave.username)
     dave_row = private_ring.generateKeyPair(KEY_SIZE, b"dave-pw")
 
     # alice adds bob's (unrelated, remote) public key as the row to certify,
     # and separately vouches for carol's and dave's real keys with full trust
-    user_module.active_user = alice
+    UserService().login(alice.username)
     bob_pub_path = _export_public_only(tmp_path, PEMService(key_size=KEY_SIZE).generateKeyPair()[1], "bob_pub.pem")
     target_row = public_ring.addRow(bob_pub_path, KEY_SIZE, "bob@example.com", ownerTrust=0)
 
@@ -49,12 +48,12 @@ def test_key_legitimacy_reaches_full_trust_after_two_full_trust_signatures(ring_
     public_ring.addRow(dave_pub_path, KEY_SIZE, dave.email, ownerTrust=FULL_TRUST_THRESHOLD)
 
     # a single full-trust signature isn't enough to cross the legitimacy threshold
-    user_module.active_user = carol
+    UserService().login(carol.username)
     public_ring.signRow(target_row.key_id, carol_row.key_id, b"carol-pw")
     assert target_row.key_legitimacy == 0
 
     # a second full-trust signature pushes the weighted sum over the threshold
-    user_module.active_user = dave
+    UserService().login(dave.username)
     public_ring.signRow(target_row.key_id, dave_row.key_id, b"dave-pw")
 
     assert target_row.key_legitimacy == 1
@@ -69,11 +68,11 @@ def test_sign_row_requires_the_exact_key_vouched_for(ring_folder, tmp_path):
     private_ring = PrivateKeyRing(ring_folder)
     public_ring = PublicKeyRing(ring_folder)
 
-    user_module.active_user = carol
+    UserService().login(carol.username)
     vouched_for_row = private_ring.generateKeyPair(KEY_SIZE, b"carol-pw")
     unrelated_row = private_ring.generateKeyPair(KEY_SIZE, b"carol-pw-2")
 
-    user_module.active_user = alice
+    UserService().login(alice.username)
     bob_pub_path = _export_public_only(tmp_path, PEMService(key_size=KEY_SIZE).generateKeyPair()[1], "bob_pub.pem")
     target_row = public_ring.addRow(bob_pub_path, KEY_SIZE, "bob@example.com", ownerTrust=0)
 
@@ -81,7 +80,7 @@ def test_sign_row_requires_the_exact_key_vouched_for(ring_folder, tmp_path):
     carol_pub_path = _export_public_only(tmp_path, vouched_for_row.public_key_pem, "carol_pub.pem")
     public_ring.addRow(carol_pub_path, KEY_SIZE, carol.email, ownerTrust=90)
 
-    user_module.active_user = carol
+    UserService().login(carol.username)
     with pytest.raises(PermissionError):
         public_ring.signRow(target_row.key_id, unrelated_row.key_id, b"carol-pw-2")
 
@@ -98,10 +97,10 @@ def test_deleting_a_private_key_cascades_and_strips_dependent_signatures(ring_fo
     private_ring = PrivateKeyRing(ring_folder)
     public_ring = PublicKeyRing(ring_folder)
 
-    user_module.active_user = bob
+    UserService().login(bob.username)
     bob_row = private_ring.generateKeyPair(KEY_SIZE, b"bob-pw")
 
-    user_module.active_user = alice
+    UserService().login(alice.username)
     alice_row = private_ring.generateKeyPair(KEY_SIZE, b"alice-pw")
     bob_pub_path = _export_public_only(tmp_path, bob_row.public_key_pem, "bob_pub.pem")
     target_row = public_ring.addRow(bob_pub_path, KEY_SIZE, bob.email, ownerTrust=50)

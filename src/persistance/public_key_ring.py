@@ -6,7 +6,7 @@ plus the owner-trust needed to decide how much to
 trust certificates that chain through other people's signatures. It is a
 singleton because the process only ever works against a single ring file
 at a time - we can read anyone's public key to check signatures, but only
-the locally logged-in user (`user.active_user`) can add/remove/sign rows.
+the locally logged-in user (`UserService().getActiveUser()`) can add/remove/sign rows.
 
 Row terminology (matches the original spec):
     row.user_email  -> email of the User who added this row (the "owner of the row").
@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 
 from cryptography.hazmat.primitives import serialization
 
-from persistance import user as user_module
+from persistance.user import UserService
 from persistance import key_ring_utils as utils
 from services.pem_service import PEMService
 from persistance.private_key_ring import PrivateKeyRing
@@ -164,13 +164,13 @@ class PublicKeyRing:
         bypasses this, since active_user is allowed to sign rows added by
         other people."""
         row = self._findRowByKeyId(keyId)
-        if row is None or row.user_email != user_module.active_user.email:
+        if row is None or row.user_email != UserService().getActiveUser().email:
             return None
         return row
 
     def getAllRows(self) -> list[PublicKeyRingRow]:
         """All rows added by active_user (row.user_email == active_user.email)."""
-        return [row for row in self.rows if row.user_email == user_module.active_user.email]
+        return [row for row in self.rows if row.user_email == UserService().getActiveUser().email]
 
     # -----------------------------------------------------------------
     # add
@@ -179,7 +179,7 @@ class PublicKeyRing:
     def addRow(self, publicKeyPath: str, keySize: int, ownerEmail: str, ownerTrust: int) -> PublicKeyRingRow:
         """Add a row for the public key imported from publicKeyPath. Only
         usable for remote keys: ownerEmail must not be active_user's own."""
-        if ownerEmail == user_module.active_user.email:
+        if ownerEmail == UserService().getActiveUser().email:
             raise PermissionError("cannot add your own key to the public key ring")
 
         pemService = PEMService(key_size=keySize)
@@ -195,7 +195,7 @@ class PublicKeyRing:
             timestamp=datetime.now(timezone.utc),
             key_id=keyId,
             public_key_pem=publicKeyPem,
-            user_email=user_module.active_user.email,
+            user_email=UserService().getActiveUser().email,
             owner_email=ownerEmail,
             owner_trust=ownerTrust,
             key_legitimacy=0,
@@ -217,7 +217,7 @@ class PublicKeyRing:
         row = self._findRowByKeyId(keyId)
         if row is None:
             return False
-        if row.user_email != user_module.active_user.email:
+        if row.user_email != UserService().getActiveUser().email:
             raise PermissionError("only the row's owner can delete it")
 
         self.rows.remove(row)
@@ -261,7 +261,7 @@ class PublicKeyRing:
         privateRow = privateKeyRing.findByKeyId(signerKeyId)
         if privateRow is None:
             raise ValueError(f"no private key ring entry for keyId {signerKeyId.hex()}")
-        if privateRow.user_email != user_module.active_user.email:
+        if privateRow.user_email != UserService().getActiveUser().email:
             raise PermissionError("can only sign with your own key pair")
 
         if any(sig.idpu_signature == signerKeyId for sig in row.signatures):
@@ -290,7 +290,7 @@ class PublicKeyRing:
         return signature
 
     def _canSign(self, row: PublicKeyRingRow, signerKeyId: bytes) -> bool:
-        activeUserEmail = user_module.active_user.email
+        activeUserEmail = UserService().getActiveUser().email
         if row.user_email == activeUserEmail:
             return True
         """
@@ -321,7 +321,7 @@ class PublicKeyRing:
     # -----------------------------------------------------------------
 
     def _recalculateKeyLegitimacy(self, row: PublicKeyRingRow) -> None:
-        if row.user_email == user_module.active_user.email:
+        if row.user_email == UserService().getActiveUser().email:
             row.key_legitimacy = 1
             return
 

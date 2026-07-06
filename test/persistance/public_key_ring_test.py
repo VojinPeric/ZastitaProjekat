@@ -13,7 +13,7 @@ import pytest
 from cryptography.hazmat.primitives import hashes
 
 from persistance import key_ring_utils
-from persistance import user as user_module
+from persistance.user import UserService
 from persistance.private_key_ring import PrivateKeyRing
 from persistance.public_key_ring import PublicKeyRing
 from services.authentication_service import AuthenticationService
@@ -75,10 +75,10 @@ def test_get_all_rows_and_get_row_by_key_id_are_scoped_to_active_user(
     ring = PublicKeyRing(ring_folder)
     own_row = ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
 
-    user_module.active_user = second_user
+    UserService().login(second_user.username)
     path2, _ = _export_public_only(tmp_path, "other_owner_pub.pem")
     other_row = ring.addRow(path2, KEY_SIZE, "carol@example.com", ownerTrust=10)
-    user_module.active_user = active_user
+    UserService().login(active_user.username)
 
     assert ring.getAllRows() == [own_row]
     assert ring.getRowByKeyId(own_row.key_id) is own_row
@@ -99,10 +99,10 @@ def test_delete_row_rejects_non_owner(ring_folder, active_user, second_user, tmp
     ring = PublicKeyRing(ring_folder)
     row = ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
 
-    user_module.active_user = second_user
+    UserService().login(second_user.username)
     with pytest.raises(PermissionError):
         ring.deleteRow(row.key_id)
-    user_module.active_user = active_user
+    UserService().login(active_user.username)
 
     assert ring.deleteRow(row.key_id) is True
     assert ring._findRowByKeyId(row.key_id) is None
@@ -193,10 +193,10 @@ def test_sign_row_rejects_unpermitted_signer(ring_folder, active_user, second_us
     public_ring = PublicKeyRing(ring_folder)
     target_row = public_ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)  # added by active_user (alice)
 
-    user_module.active_user = second_user  # bob has no relation to this row or signer_row
+    UserService().login(second_user.username)  # bob has no relation to this row or signer_row
     with pytest.raises(PermissionError):
         public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
-    user_module.active_user = active_user
+    UserService().login(active_user.username)
 
 
 # ---------------------------------------------------------------------------

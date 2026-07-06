@@ -101,4 +101,42 @@ class UserRing:
         return next((user for user in self.users if user.email == email), None)
 
 
-active_user: User = None
+class UserService:
+    """Singleton holding which User is currently active in the app."""
+
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            instance = super().__new__(cls)
+            instance._setup()
+            cls._instance = instance
+        return cls._instance
+
+    def _setup(self) -> None:
+        self.activeUser: User | None = None
+
+    @classmethod
+    def resetSingleton(cls) -> None:
+        cls._instance = None
+
+    # -----------------------------------------------------------------
+    # session
+    # -----------------------------------------------------------------
+
+    def login(self, username: str) -> User:
+        """Make an existing user (found via UserRing) the active user."""
+        user = UserRing().findByUsername(username)
+        if user is None:
+            raise ValueError(f"no such user: '{username}'")
+        self.activeUser = user
+        return user
+
+    def logout(self) -> None:
+        self.activeUser = None
+
+    def getActiveUser(self) -> User | None:
+        return self.activeUser
+
+    def isLoggedIn(self) -> bool:
+        return self.activeUser is not None

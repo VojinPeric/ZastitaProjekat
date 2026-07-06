@@ -6,8 +6,8 @@ user: one row per pair, with the private key encrypted at rest -
 E(H(password), PRkey), i.e. PKCS8 PEM encryption, which already derives its
 symmetric key from a password hash. Every operation here is only ever
 allowed on rows owned by the currently active user (row.user_email ==
-user.active_user.email); for anything else, look the user up through
-user.py (UserRing).
+UserService().getActiveUser().email); for anything else, look the user up
+through user.py (UserRing).
 """
 
 import json
@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from cryptography.hazmat.primitives import serialization
 
 
-from persistance import user as user_module
+from persistance.user import UserService
 from persistance import key_ring_utils as utils
 from services.pem_service import PEMService
 
@@ -111,20 +111,20 @@ class PrivateKeyRing:
         row = self.findByKeyId(keyId)
         if row is None:
             raise ValueError(f"no private key ring row for keyId {keyId.hex()}")
-        if row.user_email != user_module.active_user.email:
+        if row.user_email != UserService().getActiveUser().email:
             raise PermissionError("only the row's owner can access it")
         return row
 
     def getRowByKeyId(self, keyId: bytes) -> PrivateKeyRingRow | None:
         """Read a row, restricted to rows owned by active_user."""
         row = self.findByKeyId(keyId)
-        if row is None or row.user_email != user_module.active_user.email:
+        if row is None or row.user_email != UserService().getActiveUser().email:
             return None
         return row
 
     def getAllRows(self) -> list[PrivateKeyRingRow]:
         """All rows owned by active_user."""
-        return [row for row in self.rows if row.user_email == user_module.active_user.email]
+        return [row for row in self.rows if row.user_email == UserService().getActiveUser().email]
 
     # -----------------------------------------------------------------
     # add
@@ -158,7 +158,7 @@ class PrivateKeyRing:
             key_id=keyId,
             public_key_pem=publicPem,
             encrypted_private_key_pem=encryptedPrivateKeyPem,
-            user_email=user_module.active_user.email,
+            user_email=UserService().getActiveUser().email,
         )
         self.rows.append(row)
         self._writeRows(self.rows)
