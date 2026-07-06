@@ -5,8 +5,8 @@ Holds key pairs that belong to (were generated or imported by) the local
 user: one row per pair, with the private key encrypted at rest -
 E(H(password), PRkey), i.e. PKCS8 PEM encryption, which already derives its
 symmetric key from a password hash. Every operation here is only ever
-allowed on rows owned by the currently active user (row.userEmail ==
-user.active_user.Email); for anything else, look the user up through
+allowed on rows owned by the currently active user (row.user_email ==
+user.active_user.email); for anything else, look the user up through
 user.py (UserRing).
 """
 
@@ -32,28 +32,28 @@ def _keyIdFromPublicKeyPem(publicKeyPem: bytes) -> bytes:
 @dataclass
 class PrivateKeyRingRow:
     timestamp: datetime
-    keyId: bytes
-    publicKeyPem: bytes
-    encryptedPrivateKeyPem: bytes
-    userEmail: str
+    key_id: bytes
+    public_key_pem: bytes
+    encrypted_private_key_pem: bytes
+    user_email: str
 
     def to_dict(self) -> dict:
         return {
             "timestamp": self.timestamp.isoformat(),
-            "keyId": self.keyId.hex(),
-            "publicKeyPem": self.publicKeyPem.decode("ascii"),
-            "encryptedPrivateKeyPem": self.encryptedPrivateKeyPem.decode("ascii"),
-            "userEmail": self.userEmail,
+            "keyId": self.key_id.hex(),
+            "publicKeyPem": self.public_key_pem.decode("ascii"),
+            "encryptedPrivateKeyPem": self.encrypted_private_key_pem.decode("ascii"),
+            "userEmail": self.user_email,
         }
 
     @staticmethod
     def from_dict(data: dict) -> "PrivateKeyRingRow":
         return PrivateKeyRingRow(
             timestamp=datetime.fromisoformat(data["timestamp"]),
-            keyId=bytes.fromhex(data["keyId"]),
-            publicKeyPem=data["publicKeyPem"].encode("ascii"),
-            encryptedPrivateKeyPem=data["encryptedPrivateKeyPem"].encode("ascii"),
-            userEmail=data["userEmail"],
+            key_id=bytes.fromhex(data["keyId"]),
+            public_key_pem=data["publicKeyPem"].encode("ascii"),
+            encrypted_private_key_pem=data["encryptedPrivateKeyPem"].encode("ascii"),
+            user_email=data["userEmail"],
         )
 
 
@@ -109,26 +109,26 @@ class PrivateKeyRing:
     # -----------------------------------------------------------------
 
     def findByKeyId(self, keyId: bytes) -> PrivateKeyRingRow | None:
-        return next((row for row in self.rows if row.keyId == keyId), None)
+        return next((row for row in self.rows if row.key_id == keyId), None)
 
     def _requireOwnRow(self, keyId: bytes) -> PrivateKeyRingRow:
         row = self.findByKeyId(keyId)
         if row is None:
             raise ValueError(f"no private key ring row for keyId {keyId.hex()}")
-        if row.userEmail != user_module.active_user.Email:
+        if row.user_email != user_module.active_user.email:
             raise PermissionError("only the row's owner can access it")
         return row
 
     def getRowByKeyId(self, keyId: bytes) -> PrivateKeyRingRow | None:
         """Read a row, restricted to rows owned by active_user."""
         row = self.findByKeyId(keyId)
-        if row is None or row.userEmail != user_module.active_user.Email:
+        if row is None or row.user_email != user_module.active_user.email:
             return None
         return row
 
     def getAllRows(self) -> list[PrivateKeyRingRow]:
         """All rows owned by active_user."""
-        return [row for row in self.rows if row.userEmail == user_module.active_user.Email]
+        return [row for row in self.rows if row.user_email == user_module.active_user.email]
 
     # -----------------------------------------------------------------
     # add (generate or import)
@@ -159,10 +159,10 @@ class PrivateKeyRing:
 
         row = PrivateKeyRingRow(
             timestamp=datetime.now(timezone.utc),
-            keyId=keyId,
-            publicKeyPem=publicPem,
-            encryptedPrivateKeyPem=encryptedPrivateKeyPem,
-            userEmail=user_module.active_user.Email,
+            key_id=keyId,
+            public_key_pem=publicPem,
+            encrypted_private_key_pem=encryptedPrivateKeyPem,
+            user_email=user_module.active_user.email,
         )
         self.rows.append(row)
         self._writeRows(self.rows)
@@ -190,20 +190,20 @@ class PrivateKeyRing:
 
     def exportPublicKey(self, keyId: bytes, filePath: str) -> None:
         row = self._requireOwnRow(keyId)
-        PEMService().exportToFile(filePath, None, row.publicKeyPem)
+        PEMService().exportToFile(filePath, None, row.public_key_pem)
 
     def exportKeyPair(self, keyId: bytes, password: bytes, filePath: str) -> None:
         """Export the full key pair, decrypting the private key with
         `password` first (also serves as the password check)."""
         row = self._requireOwnRow(keyId)
         privatePem = self.getDecryptedPrivateKeyPem(keyId, password)
-        PEMService().exportToFile(filePath, privatePem, row.publicKeyPem)
+        PEMService().exportToFile(filePath, privatePem, row.public_key_pem)
 
     def getDecryptedPrivateKeyPem(self, keyId: bytes, password: bytes) -> bytes:
         """Decrypt the row's private key with `password` and re-export it
         unencrypted, ready to hand to AuthenticationService.sign."""
         row = self._requireOwnRow(keyId)
-        privateKey = serialization.load_pem_private_key(row.encryptedPrivateKeyPem, password=password)
+        privateKey = serialization.load_pem_private_key(row.encrypted_private_key_pem, password=password)
         return privateKey.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,

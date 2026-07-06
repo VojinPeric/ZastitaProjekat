@@ -17,23 +17,23 @@ RING_FILENAME = "users.json"
 @dataclass
 class User:
     """The user class (username, email, path to their message box folder)"""
-    Username: str
-    Email: str
-    MessageBoxFolderPath: str
+    username: str
+    email: str
+    message_box_folder_path: str
 
     def to_dict(self) -> dict:
         return {
-            "Username": self.Username,
-            "Email": self.Email,
-            "MessageBoxFolderPath": self.MessageBoxFolderPath,
+            "Username": self.username,
+            "Email": self.email,
+            "MessageBoxFolderPath": self.message_box_folder_path,
         }
 
     @staticmethod
     def from_dict(data: dict) -> "User":
         return User(
-            Username=data["Username"],
-            Email=data["Email"],
-            MessageBoxFolderPath=data["MessageBoxFolderPath"],
+            username=data["Username"],
+            email=data["Email"],
+            message_box_folder_path=data["MessageBoxFolderPath"],
         )
 
 
@@ -89,16 +89,16 @@ class UserRing:
         if self.findByEmail(email) is not None:
             raise ValueError(f"email '{email}' already exists")
 
-        user = User(Username=username, Email=email, MessageBoxFolderPath=messageBoxFolderPath)
+        user = User(username=username, email=email, message_box_folder_path=messageBoxFolderPath)
         self.users.append(user)
         self._writeUsers(self.users)
         return user
 
     def findByUsername(self, username: str) -> User | None:
-        return next((user for user in self.users if user.Username == username), None)
+        return next((user for user in self.users if user.username == username), None)
 
     def findByEmail(self, email: str) -> User | None:
-        return next((user for user in self.users if user.Email == email), None)
+        return next((user for user in self.users if user.email == email), None)
 
 
 active_user: User = None
