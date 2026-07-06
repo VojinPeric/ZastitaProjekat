@@ -6,7 +6,7 @@ import zlib
 
 import pytest
 
-from compression_service import CompressionService
+from services.compression_service import CompressionService
 
 
 @pytest.fixture

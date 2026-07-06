@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from pgp_messages import SignedMessage
-from authentication_service import (
+from services.authentication_service import (
     AuthenticationService,
     toBytesFromSignedMessage,
     fromBytesToSignedMessage,

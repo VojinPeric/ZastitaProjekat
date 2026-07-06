@@ -5,7 +5,7 @@ pytest tests for PEMService.
 import pytest
 from cryptography.hazmat.primitives import serialization
 
-from pem_service import PEMService, DEFAULT_KEY_SIZE, DEFAULT_PUBLIC_EXPONENT
+from services.pem_service import PEMService, DEFAULT_KEY_SIZE, DEFAULT_PUBLIC_EXPONENT
 
 
 @pytest.fixture

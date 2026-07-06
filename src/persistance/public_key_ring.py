@@ -22,10 +22,10 @@ from datetime import datetime, timezone
 
 from cryptography.hazmat.primitives import serialization
 
-import user as user_module
-from pem_service import PEMService
-from private_key_ring import PrivateKeyRing
-from authentication_service import AuthenticationService
+from persistance import user as user_module
+from services.pem_service import PEMService
+from persistance.private_key_ring import PrivateKeyRing
+from services.authentication_service import AuthenticationService
 
 RING_FILENAME = "public_key_ring.json"
 

@@ -6,7 +6,7 @@ import base64
 
 import pytest
 
-from compatibility_service import CompatibilityService
+from services.compatibility_service import CompatibilityService
 
 
 @pytest.fixture

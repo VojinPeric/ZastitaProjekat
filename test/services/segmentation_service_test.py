@@ -7,7 +7,7 @@ import struct
 
 import pytest
 
-from segmentation_service import (
+from services.segmentation_service import (
     SegmentationService,
     DEFAULT_MAX_SEGMENT_SIZE,
     HEADER_SIZE,

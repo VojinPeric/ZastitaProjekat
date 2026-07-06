@@ -17,8 +17,8 @@ from datetime import datetime, timezone
 
 from cryptography.hazmat.primitives import serialization
 
-import user as user_module
-from pem_service import PEMService
+from persistance import user as user_module
+from services.pem_service import PEMService
 
 RING_FILENAME = "private_key_ring.json"
 
@@ -180,7 +180,7 @@ class PrivateKeyRing:
         self.rows.remove(row)
         self._writeRows(self.rows)
 
-        from public_key_ring import PublicKeyRing  # deferred: avoids circular import
+        from persistance.public_key_ring import PublicKeyRing  # deferred: avoids circular import
         PublicKeyRing(self.folderPath).deleteAllRowsForKeyId(keyId)
         return True
 

@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from pgp_messages import EncryptedMessage, AlgorithmSymmetric
-from encryption_service import (
+from services.encryption_service import (
     EncryptionService,
     toBytesFromEncryptedMessage,
     fromBytesToEncryptedMessage,
