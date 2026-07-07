@@ -31,7 +31,7 @@ from pgp_messages import SignedMessage
 class AuthenticationService:
     def sign(self, msg: bytes, privateKeyPem: bytes, password: bytes = None) -> SignedMessage:
         privateKey = serialization.load_pem_private_key(privateKeyPem, password=password)
-        assert isinstance(privateKey, RSAPrivateKey)
+        # assert isinstance(privateKey, RSAPrivateKey)
 
         # SHA-1 digest computed once, reused for both the leading octets and the signature
         digest = hashes.Hash(hashes.SHA1())
@@ -78,7 +78,8 @@ class AuthenticationService:
             return True
         except InvalidSignature:
             return False
-
+        except Exception:
+            raise ValueError("Bad format when authenticating the message")
 
 def toBytesFromSignedMessage(message: SignedMessage) -> bytes:
     timestamp = int(message.timestamp.timestamp())
@@ -92,22 +93,26 @@ def toBytesFromSignedMessage(message: SignedMessage) -> bytes:
 
 
 def fromBytesToSignedMessage(data: bytes) -> SignedMessage:
-    timestamp, keyIdLen, signatureLen = struct.unpack(">IHH", data[:8])
-    offset = 8
+    try:
+        timestamp, keyIdLen, signatureLen = struct.unpack(">IHH", data[:8])
+        offset = 8
 
-    leadingTwoOctets = data[offset:offset + 2]
-    offset += 2
+        leadingTwoOctets = data[offset:offset + 2]
+        offset += 2
 
-    keyId = data[offset:offset + keyIdLen]
-    offset += keyIdLen
+        keyId = data[offset:offset + keyIdLen]
+        offset += keyIdLen
 
-    signature = data[offset:offset + signatureLen]
-    offset += signatureLen
+        signature = data[offset:offset + signatureLen]
+        offset += signatureLen
 
-    result = SignedMessage()
-    result.timestamp = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-    result.leadingTwoOctets = leadingTwoOctets
-    result.keyId = keyId
-    result.signature = signature
-    result.rawMessage = data[offset:]
-    return result
+        result = SignedMessage()
+        result.timestamp = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        result.leadingTwoOctets = leadingTwoOctets
+        result.keyId = keyId
+        result.signature = signature
+        result.rawMessage = data[offset:]
+        return result
+    except Exception:
+        raise ValueError("Bad format when decoding message")
+
