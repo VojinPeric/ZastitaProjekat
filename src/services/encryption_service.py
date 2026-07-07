@@ -54,23 +54,26 @@ class EncryptionService:
         return result
 
     def decrypt(self, msg: EncryptedMessage, PR: bytes) -> bytes:
-        privateKey = serialization.load_pem_private_key(PR, password=None)
+        try:
+            privateKey = serialization.load_pem_private_key(PR, password=None)
 
-        # decryption of session key
+            # decryption of session key
 
-        sessionKey = privateKey.decrypt(msg.encryptedSessionKey, rsa_padding.PKCS1v15())
+            sessionKey = privateKey.decrypt(msg.encryptedSessionKey, rsa_padding.PKCS1v15())
 
-        # decryption of message
+            # decryption of message
 
-        if msg.algorythm == AlgorithmSymmetric.AES:
-            cipher = Cipher(algorithms.AES(sessionKey), modes.CFB(msg.iv))
-        elif msg.algorythm == AlgorithmSymmetric.DES3:
-            cipher = Cipher(algorithms.TripleDES(sessionKey), modes.CFB(msg.iv))
+            if msg.algorythm == AlgorithmSymmetric.AES:
+                cipher = Cipher(algorithms.AES(sessionKey), modes.CFB(msg.iv))
+            elif msg.algorythm == AlgorithmSymmetric.DES3:
+                cipher = Cipher(algorithms.TripleDES(sessionKey), modes.CFB(msg.iv))
 
-        decryptor = cipher.decryptor()
-        msgDecrypted = decryptor.update(msg.msg[len(msg.iv):]) + decryptor.finalize()
+            decryptor = cipher.decryptor()
+            msgDecrypted = decryptor.update(msg.msg[len(msg.iv):]) + decryptor.finalize()
 
-        return msgDecrypted
+            return msgDecrypted
+        except Exception:
+            raise ValueError("Key wrong or message incorrect")
     
 def toBytesFromEncryptedMessage(message: EncryptedMessage) -> bytes:
     algorithmCode = ALGORITHM_CODES[message.algorythm]
@@ -90,25 +93,28 @@ def toBytesFromEncryptedMessage(message: EncryptedMessage) -> bytes:
     )
 
 def fromBytesToEncryptedMessage(data: bytes) -> EncryptedMessage:
-    algorithmCode, keyIdLen, ivLen = struct.unpack(">BHH", data[:5])
-    offset = 5
+    try:
+        algorithmCode, keyIdLen, ivLen = struct.unpack(">BHH", data[:5])
+        offset = 5
 
-    keyId = data[offset:offset + keyIdLen]
-    offset += keyIdLen
+        keyId = data[offset:offset + keyIdLen]
+        offset += keyIdLen
 
-    iv = data[offset:offset + ivLen]
-    offset += ivLen
+        iv = data[offset:offset + ivLen]
+        offset += ivLen
 
-    encryptedSessionKeyLen = struct.unpack(">I", data[offset:offset + 4])[0]
-    offset += 4
+        encryptedSessionKeyLen = struct.unpack(">I", data[offset:offset + 4])[0]
+        offset += 4
 
-    encryptedSessionKey = data[offset:offset + encryptedSessionKeyLen]
-    offset += encryptedSessionKeyLen
+        encryptedSessionKey = data[offset:offset + encryptedSessionKeyLen]
+        offset += encryptedSessionKeyLen
 
-    result = EncryptedMessage()
-    result.algorythm = ALGORITHM_FROM_CODE[algorithmCode]
-    result.keyId = keyId
-    result.iv = iv
-    result.encryptedSessionKey = encryptedSessionKey
-    result.msg = data[offset:]
-    return result
+        result = EncryptedMessage()
+        result.algorythm = ALGORITHM_FROM_CODE[algorithmCode]
+        result.keyId = keyId
+        result.iv = iv
+        result.encryptedSessionKey = encryptedSessionKey
+        result.msg = data[offset:]
+        return result
+    except Exception:
+        raise ValueError("Bad format when decoding message")

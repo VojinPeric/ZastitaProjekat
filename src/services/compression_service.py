@@ -6,4 +6,7 @@ class CompressionService:
         return zlib.compress(data)
  
     def decompress(self, data: bytes) -> bytes:
-        return zlib.decompress(data)
+        try:
+            return zlib.decompress(data)
+        except Exception:
+            raise ValueError("Bad format when decompressing message")
