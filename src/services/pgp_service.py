@@ -3,23 +3,15 @@ Top-level PGP service.
 
 Orchestrates the send/receive pipeline for the currently active user, composing
 the per-step services rather than reimplementing them. Which steps run is
-configurable (PgpStep), so a message can go through nothing (plain pass-through)
-up to the whole pipeline.
+configurable through PgpStep
 
 Send order follows the PGP scheme: authentication (sign) -> compression ->
 encryption (confidentiality) -> radix-64 conversion. Receive reverses it.
 
 On-disk message format (see _packContainer/_unpackContainer):
+|magic (4)|flags (1)|payload (rest)|
 
-    +-----------+-----------+-------------------------------+
-    | magic (4) | flags (1) |        payload (rest)         |
-    +-----------+-----------+-------------------------------+
-
-`flags` is the PgpStep value of the steps that were actually applied, so the
-receiver reads it first and knows exactly which packets to unwrap and in which
-order - no guessing. `payload` is the message after those steps; each step's own
-bytes (SignedMessage / EncryptedMessage) already carry the key ids, algorithm,
-iv, etc. needed to reverse it.
+`flags` is the PgpStep value of the steps that were actually applied.
 """
 
 import os
@@ -44,9 +36,8 @@ from services.encryption_service import (
 )
 from services.compression_service import CompressionService
 from services.compatibility_service import CompatibilityService
-from services.segmentation_service import SegmentationService
 
-KEY_RING_DIRNAME = "key_rings"
+KEY_RING_DIRNAME = "KEY_RINGS"
 
 # container framing
 MAGIC = b"PGP1"
@@ -57,6 +48,7 @@ _FLAGS_FORMAT = ">B"
 _MESSAGE_HEADER_FORMAT = ">IH"
 _MESSAGE_HEADER_SIZE = 6
 
+ROOT_PATH = "users"
 
 class PgpStep(Flag):
     """Which transformation steps of the PGP pipeline to apply. Combine with
@@ -87,15 +79,13 @@ class PgpService:
     lives under <root_path>/<user email>/:
 
         <root_path>/<email>/
-            key_rings/          -> private_key_ring.json + public_key_ring.json
-            <message files>     -> sent/received messages, chosen by the user
+            <message files> -> received messages, chosen by the user
 
-    The active user (from UserService) decides whose folder this is, so a user
-    must be logged in before a PgpService is created. `steps` is the default
+    User must be logged in before a PgpService is created. `steps` is the default
     selection of pipeline steps; send() can override it per message.
     """
 
-    def __init__(self, root_path: str, steps: PgpStep = PgpStep.NONE):
+    def __init__(self, steps: PgpStep = PgpStep.NONE):
         self._userService = UserService()
         activeUser = self._userService.getActiveUser()
         if activeUser is None:
@@ -104,10 +94,10 @@ class PgpService:
         self.steps = steps
 
         # the user's folder is named after their email; messages live directly here
-        self.userFolderPath = os.path.join(root_path, activeUser.email)
+        self.userFolderPath = os.path.join(ROOT_PATH, activeUser.email)
         os.makedirs(self.userFolderPath, exist_ok=True)
 
-        keyRingFolder = os.path.join(self.userFolderPath, KEY_RING_DIRNAME)
+        keyRingFolder = os.path.join(ROOT_PATH, KEY_RING_DIRNAME)
 
         self._privateKeyRing = PrivateKeyRing(keyRingFolder)
         self._publicKeyRing = PublicKeyRing(keyRingFolder)
@@ -115,7 +105,6 @@ class PgpService:
         self._encryptionService = EncryptionService()
         self._compressionService = CompressionService()
         self._compatibilityService = CompatibilityService()
-        self._segmentationService = SegmentationService()
 
     # -----------------------------------------------------------------
     # send
@@ -273,9 +262,6 @@ class PgpService:
         if ownRow is not None:
             return ownRow.user_email
         return None
-
-    def _isStepEnabled(self, step: PgpStep) -> bool:
-        return bool(self.steps & step)
 
 
 # ---------------------------------------------------------------------
