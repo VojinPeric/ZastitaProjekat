@@ -804,7 +804,7 @@ class ReceivedMessageWindow(tk.Toplevel):
         if result.signature_valid is None:
             rows.append(("Potpis:", "poruka nije potpisana"))
         else:
-            status = "VALIDAN" if result.signature_valid else "NEVALIDAN"
+            status = "VALIDAN" if result.signature_valid else "NE VALIDAN"
             rows.append(("Potpis:", status))
             rows.append(("Potpisao (keyId):", result.signer_key_id.hex() if result.signer_key_id else "-"))
             rows.append(("Potpisao (email):", result.signer_email or "nepoznat"))

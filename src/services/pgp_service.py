@@ -23,7 +23,7 @@ from enum import Flag
 from pgp_messages import Message, AlgorithmSymmetric
 from persistance.user import UserService
 from persistance.private_key_ring import PrivateKeyRing
-from persistance.public_key_ring import PublicKeyRing
+from persistance.public_key_ring import PublicKeyRing, PublicKeyRingRow
 from services.authentication_service import (
     AuthenticationService,
     toBytesFromSignedMessage,
@@ -149,10 +149,10 @@ class PgpService:
         if bool(steps & PgpStep.ENCRYPTION):
             if recipient_key_id is None:
                 raise ValueError("encryption requires recipient_key_id")
-            recipientPublicKeyPem = self._findPublicKeyPemByKeyId(recipient_key_id)
-            if recipientPublicKeyPem is None:
+            recipientPublicKeyRow = self._findPublicKeyRingRow(recipient_key_id)
+            if recipientPublicKeyRow is None:
                 raise ValueError(f"no public key found for keyId {recipient_key_id.hex()}")
-            encrypted = self._encryptionService.encrypt(payload, recipientPublicKeyPem, algorithm)
+            encrypted = self._encryptionService.encrypt(payload, recipientPublicKeyRow.public_key_pem, algorithm)
             payload = toBytesFromEncryptedMessage(encrypted)
             appliedSteps |= PgpStep.ENCRYPTION
 
@@ -201,12 +201,12 @@ class PgpService:
             signed = fromBytesToSignedMessage(payload)
             signer_key_id = signed.keyId
             signer_email = self._emailForKeyId(signed.keyId)
-            signerPublicKeyPem = self._findPublicKeyPemByKeyId(signed.keyId)
-            signature_valid = (
-                self._authenticationService.verify(signed, signerPublicKeyPem)
-                if signerPublicKeyPem is not None
-                else False
-            )
+            signerPublicKeyRow = self._findPublicKeyRingRow(signed.keyId)
+            if signerPublicKeyRow is None or signerPublicKeyRow.key_legitimacy != 1:
+                signature_valid = False
+            else:
+                 signature_valid = self._authenticationService.verify(
+                     signed, signerPublicKeyRow.public_key_pem)
             payload = signed.rawMessage
 
         return ReceiveResult(
@@ -236,26 +236,18 @@ class PgpService:
         except Exception as error:
             raise ValueError(f"decryption failed: {error}") from error
 
-    def _findPublicKeyPemByKeyId(self, keyId: bytes) -> bytes | None:
-        """The public key PEM for keyId, whether it's one of the active user's
-        own keys (private ring) or a correspondent's imported key (public ring)."""
-        ownRow = self._privateKeyRing.findByKeyId(keyId)
-        if ownRow is not None:
-            return ownRow.public_key_pem
+    def _findPublicKeyRingRow(self, keyId: bytes) -> PublicKeyRingRow | None:
+        """The public key PEM for keyId, in public key ring of active user."""
         importedRow = self._publicKeyRing.getRowByKeyId(keyId)
         if importedRow is not None:
-            return importedRow.public_key_pem
+            return importedRow
         return None
 
     def _emailForKeyId(self, keyId: bytes) -> str | None:
-        """The email associated with keyId: the key owner for an imported key,
-        or the active user for one of their own keys."""
+        """The email associated with keyId: the key owner for an imported key."""
         importedRow = self._publicKeyRing.getRowByKeyId(keyId)
         if importedRow is not None:
             return importedRow.owner_email
-        ownRow = self._privateKeyRing.findByKeyId(keyId)
-        if ownRow is not None:
-            return ownRow.user_email
         return None
 
 
