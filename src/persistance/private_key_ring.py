@@ -69,6 +69,10 @@ class PrivateKeyRing:
             instance = super().__new__(cls)
             instance._setup(folder_path)
             cls._instance = instance
+        elif folder_path is not None and folder_path != cls._instance.folderPath:
+            # a different user's ring folder was requested (e.g. after a new
+            # login): re-point the shared instance to that folder and reload
+            cls._instance._setup(folder_path)
         return cls._instance
 
     def _setup(self, folder_path: str) -> None:
