@@ -312,8 +312,8 @@ class PublicKeyRingTab(ttk.Frame):
         columns = ("keyId", "timestamp", "owner", "addedBy", "trust", "legitimacy", "signatures")
         self.tree = ttk.Treeview(self, columns=columns, show="headings")
         headings = {
-            "keyId": "Key ID", "timestamp": "Timestamp", "owner": "User Email",
-            "addedBy": "Key Owner Email", "trust": "Owner Trust", "legitimacy": "Legitimacy",
+            "keyId": "Key ID", "timestamp": "Timestamp", "owner": "Key Owner",
+            "addedBy": "Row Owner", "trust": "Owner Trust", "legitimacy": "Legitimacy",
             "signatures": "Br. potpisa",
         }
         for col, text in headings.items():
