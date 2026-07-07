@@ -308,6 +308,8 @@ class PublicKeyRing:
     def _signatureTrustFor(self, row: PublicKeyRingRow, signerKeyId: bytes) -> int:
         """The Owner Trust that row.user_email themselves recorded for the
         signer's key elsewhere in the ring (0 if they never added it)."""
+        if row.user_email == UserService().getActiveUser().email:
+            return 1
         signerRow = next(
             (r for r in self.rows if r.user_email == row.user_email and r.key_id == signerKeyId),
             None,
