@@ -327,4 +327,4 @@ class PublicKeyRing:
             FULL_TRUST_WEIGHT if sig.trust >= FULL_TRUST_THRESHOLD else MARGINAL_TRUST_WEIGHT
             for sig in row.signatures
         )
-        row.key_legitimacy = 1 if weightSum > LEGITIMACY_THRESHOLD else 0
+        row.key_legitimacy = 1 if weightSum >= LEGITIMACY_THRESHOLD else 0
