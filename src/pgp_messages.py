@@ -7,6 +7,8 @@ should just send array of bytes forward.
 from datetime import datetime, timezone
 from enum import Enum
 
+ROOT_PATH = "app_data"
+
 class AlgorithmSymmetric(Enum):
     AES = "AES128"
     DES3 = "DES3"

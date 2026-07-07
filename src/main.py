@@ -21,8 +21,8 @@ from persistance.user import UserRing, UserService
 from persistance.private_key_ring import PrivateKeyRing
 from persistance.public_key_ring import PublicKeyRing
 from services.pem_service import PEMService
-from pgp_service import PgpService, PgpStep, ROOT_PATH, KEY_RING_DIRNAME
-from pgp_messages import AlgorithmSymmetric
+from services.pgp_service import PgpService, PgpStep, ROOT_PATH, KEY_RING_DIRNAME
+from pgp_messages import AlgorithmSymmetric, ROOT_PATH
 
 KEY_RING_FOLDER = os.path.join(ROOT_PATH, KEY_RING_DIRNAME)
 
@@ -732,9 +732,9 @@ class ReceiveMessageTab(ttk.Frame):
 
     def refresh(self):
         self.tree.delete(*self.tree.get_children())
-        os.makedirs(self.folder, exist_ok=True)
         selectedFilter = self.filterVar.get()
-        for name in sorted(os.listdir(self.folder)):
+        path = os.path.join(ROOT_PATH, self.folder)
+        for name in sorted(os.listdir(path)):
             if selectedFilter != "sve" and not name.endswith(selectedFilter):
                 continue
             self.tree.insert("", "end", iid=name, values=(name,))

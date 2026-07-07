@@ -36,6 +36,7 @@ from services.encryption_service import (
 )
 from services.compression_service import CompressionService
 from services.compatibility_service import CompatibilityService
+from pgp_messages import ROOT_PATH
 
 KEY_RING_DIRNAME = "KEY_RINGS"
 
@@ -47,8 +48,6 @@ _FLAGS_FORMAT = ">B"
 # then the filename and the message body
 _MESSAGE_HEADER_FORMAT = ">IH"
 _MESSAGE_HEADER_SIZE = 6
-
-ROOT_PATH = "users"
 
 class PgpStep(Flag):
     """Which transformation steps of the PGP pipeline to apply. Combine with
@@ -92,10 +91,6 @@ class PgpService:
             raise ValueError("no active user; log in through UserService before creating a PgpService")
 
         self.steps = steps
-
-        # the user's folder is named after their email; messages live directly here
-        self.userFolderPath = os.path.join(ROOT_PATH, activeUser.email)
-        os.makedirs(self.userFolderPath, exist_ok=True)
 
         keyRingFolder = os.path.join(ROOT_PATH, KEY_RING_DIRNAME)
 

@@ -11,6 +11,7 @@ import json
 import os
 from dataclasses import dataclass
 
+from pgp_messages import ROOT_PATH
 RING_FILENAME = "users.json"
 
 
@@ -136,6 +137,9 @@ class UserService:
             if email is None or userRing.findByEmail(email) is not None:
                 return None
             user = userRing.addUser(username, email, email)
+            # the user's folder is named after their email; messages live directly here
+            self.userFolderPath = os.path.join(ROOT_PATH, email)
+            os.makedirs(self.userFolderPath, exist_ok=True)
         self.activeUser = user
         return user
 
