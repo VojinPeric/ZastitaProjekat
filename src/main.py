@@ -743,7 +743,7 @@ class ReceiveMessageTab(ttk.Frame):
         if not selection:
             return
         name = selection[0]
-        path = os.path.join(self.folder, name)
+        path = os.path.join(ROOT_PATH ,self.folder, name)
 
         if name.endswith(".txt"):
             with open(path, "r", encoding="utf-8") as file:
