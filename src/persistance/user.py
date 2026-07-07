@@ -16,17 +16,16 @@ RING_FILENAME = "users.json"
 
 @dataclass
 class User:
-    """The user class (username, email, path to their per-user folder that
-    holds their key rings, messages, and everything else)."""
+    """The user class (username, email, path to their message box folder)"""
     username: str
     email: str
-    folder_path: str
+    message_box_folder_path: str
 
     def to_dict(self) -> dict:
         return {
             "Username": self.username,
             "Email": self.email,
-            "FolderPath": self.folder_path,
+            "MessageBoxFolderPath": self.message_box_folder_path,
         }
 
     @staticmethod
@@ -34,7 +33,7 @@ class User:
         return User(
             username=data["Username"],
             email=data["Email"],
-            folder_path=data["FolderPath"],
+            message_box_folder_path=data["MessageBoxFolderPath"],
         )
 
 
@@ -83,14 +82,14 @@ class UserRing:
     # operations
     # -----------------------------------------------------------------
 
-    def addUser(self, username: str, email: str, folderPath: str) -> User:
+    def addUser(self, username: str, email: str, messageBoxFolderPath: str) -> User:
         """Add a user, unless the username or email is already taken."""
         if self.findByUsername(username) is not None:
             raise ValueError(f"username '{username}' already exists")
         if self.findByEmail(email) is not None:
             raise ValueError(f"email '{email}' already exists")
 
-        user = User(username=username, email=email, folder_path=folderPath)
+        user = User(username=username, email=email, message_box_folder_path=messageBoxFolderPath)
         self.users.append(user)
         self._writeUsers(self.users)
         return user
