@@ -124,11 +124,18 @@ class UserService:
     # session
     # -----------------------------------------------------------------
 
-    def login(self, username: str) -> User:
-        """Make an existing user (found via UserRing) the active user."""
-        user = UserRing().findByUsername(username)
+    def login(self, username: str, email: str | None = None) -> User | None:
+        """
+        Log in an existing user, or register a new one on the fly.
+        """
+        userRing = UserRing()
+        user = userRing.findByUsername(username)
+        if user and user.email != email:
+            return None
         if user is None:
-            raise ValueError(f"no such user: '{username}'")
+            if email is None or userRing.findByEmail(email) is not None:
+                return None
+            user = userRing.addUser(username, email, email)
         self.activeUser = user
         return user
 

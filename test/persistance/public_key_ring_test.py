@@ -100,12 +100,12 @@ def test_delete_row_rejects_non_owner(ring_folder, active_user, second_user, tmp
     row = ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
 
     UserService().login(second_user.username)
-    with pytest.raises(PermissionError):
-        ring.deleteRow(row.key_id)
+    # bob doesn't have this row in his own ring view, so there's nothing to delete
+    assert ring.deleteRow(row.key_id) is False
     UserService().login(active_user.username)
 
     assert ring.deleteRow(row.key_id) is True
-    assert ring._findRowByKeyId(row.key_id) is None
+    assert ring.getRowByKeyId(row.key_id) is None
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +135,7 @@ def test_sign_row_produces_a_verifiable_signature(ring_folder, active_user, tmp_
     public_ring = PublicKeyRing(ring_folder)
     target_row = public_ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
 
-    signature = public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
+    signature = public_ring.signRow(target_row.user_email, target_row.key_id, signer_row.key_id, b"password")
 
     assert signature.idpu_signature == signer_row.key_id
     assert signature.idpu_signed == target_row.key_id
@@ -151,7 +151,7 @@ def test_tampered_signature_payload_fails_verification(ring_folder, active_user,
     public_ring = PublicKeyRing(ring_folder)
     target_row = public_ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
 
-    signature = public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
+    signature = public_ring.signRow(target_row.user_email, target_row.key_id, signer_row.key_id, b"password")
     tampered = signature.idpu_signature + signature.pu_signature + b"\x00" + signature.idpu_signed
 
     assert _verify_signature(signature, tampered_payload=tampered) is False
@@ -166,7 +166,7 @@ def test_sign_row_recalculates_key_legitimacy_for_own_rows(ring_folder, active_u
     target_row = public_ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
     assert target_row.key_legitimacy == 0
 
-    public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
+    public_ring.signRow(target_row.user_email, target_row.key_id, signer_row.key_id, b"password")
 
     assert target_row.key_legitimacy == 1
     assert len(target_row.signatures) == 1
@@ -180,9 +180,9 @@ def test_sign_row_rejects_double_signature_from_same_key(ring_folder, active_use
     public_ring = PublicKeyRing(ring_folder)
     target_row = public_ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
 
-    public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
+    public_ring.signRow(target_row.user_email, target_row.key_id, signer_row.key_id, b"password")
     with pytest.raises(ValueError):
-        public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
+        public_ring.signRow(target_row.user_email, target_row.key_id, signer_row.key_id, b"password")
 
 
 def test_sign_row_rejects_unpermitted_signer(ring_folder, active_user, second_user, tmp_path):
@@ -195,7 +195,7 @@ def test_sign_row_rejects_unpermitted_signer(ring_folder, active_user, second_us
 
     UserService().login(second_user.username)  # bob has no relation to this row or signer_row
     with pytest.raises(PermissionError):
-        public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
+        public_ring.signRow(target_row.user_email, target_row.key_id, signer_row.key_id, b"password")
     UserService().login(active_user.username)
 
 
@@ -210,7 +210,7 @@ def test_row_with_signature_round_trips_through_json(ring_folder, active_user, t
     path, _ = _export_public_only(tmp_path)
     public_ring = PublicKeyRing(ring_folder)
     target_row = public_ring.addRow(path, KEY_SIZE, OWNER_EMAIL, ownerTrust=50)
-    public_ring.signRow(target_row.key_id, signer_row.key_id, b"password")
+    public_ring.signRow(target_row.user_email, target_row.key_id, signer_row.key_id, b"password")
 
     with open(public_ring.filePath, "r", encoding="ascii") as file:
         data = json.load(file)
@@ -222,6 +222,6 @@ def test_row_with_signature_round_trips_through_json(ring_folder, active_user, t
 
     PublicKeyRing.resetSingleton()
     reloaded = PublicKeyRing(ring_folder)
-    reloaded_row = reloaded._findRowByKeyId(target_row.key_id)
+    reloaded_row = reloaded.getRowByKeyId(target_row.key_id)
 
     assert reloaded_row == target_row

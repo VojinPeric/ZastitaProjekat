@@ -100,7 +100,6 @@ class LoginFrame(ttk.Frame):
         buttons = ttk.Frame(self)
         buttons.pack(pady=15)
         ttk.Button(buttons, text="Login", command=self.login).pack(side="left", padx=5)
-        ttk.Button(buttons, text="Register", command=self.register).pack(side="left", padx=5)
 
     def _readForm(self) -> tuple[str, str] | None:
         username = self.usernameEntry.get().strip()
@@ -110,35 +109,19 @@ class LoginFrame(ttk.Frame):
             return None
         return username, email
 
-    def login(self): #(TODO) Refaktor da postoji samo login. Zove se funkcija UserService.login koja radi login ili pravi korisnika ili vraca NONE ako postoji korisnik sa emailom ili usernameom.
+    def login(self):
         data = self._readForm()
         if data is None:
             return
         username, email = data
+        user = UserService().login(username, email)
+        if not user:
+            messagebox.showerror("Greška", "Nesto je vec zauzeto tako da vas nemozemo ni logovati ni registrovati!.")
+            return None
 
-        user = UserRing().findByUsername(username)
-        if user is None or user.email != email:
-            messagebox.showerror("Greška", "Ne postoji korisnik sa tim username-om i email-om.")
-            return
-
-        UserService().login(username)
         self.app.showMain()
 
-    def register(self):
-        data = self._readForm()
-        if data is None:
-            return
-        username, email = data
 
-        try:
-            messageBoxFolder = os.path.join(ROOT_PATH, email)
-            UserRing().addUser(username, email, messageBoxFolder)
-            os.makedirs(messageBoxFolder, exist_ok=True)
-        except ValueError as error:
-            messagebox.showerror("Greška", str(error))
-            return
-
-        messagebox.showinfo("Uspeh", f"Korisnik '{username}' je registrovan. Sada se ulogujte.")
 
 
 # ---------------------------------------------------------------------
@@ -553,7 +536,7 @@ class SignKeyTab(ttk.Frame):
             return
 
         try:
-            PublicKeyRing(KEY_RING_FOLDER).signRow(row.key_id, signerKeyId, password) #TODO(FIX THIS)
+            PublicKeyRing(KEY_RING_FOLDER).signRow(row.user_email, row.key_id, signerKeyId, password)
             self.refresh()
             messagebox.showinfo("Uspeh", "Ključ je potpisan.")
         except Exception as error:

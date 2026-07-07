@@ -49,12 +49,12 @@ def test_key_legitimacy_reaches_full_trust_after_two_full_trust_signatures(ring_
 
     # a single full-trust signature isn't enough to cross the legitimacy threshold
     UserService().login(carol.username)
-    public_ring.signRow(target_row.key_id, carol_row.key_id, b"carol-pw")
+    public_ring.signRow(target_row.user_email, target_row.key_id, carol_row.key_id, b"carol-pw")
     assert target_row.key_legitimacy == 0
 
     # a second full-trust signature pushes the weighted sum over the threshold
     UserService().login(dave.username)
-    public_ring.signRow(target_row.key_id, dave_row.key_id, b"dave-pw")
+    public_ring.signRow(target_row.user_email, target_row.key_id, dave_row.key_id, b"dave-pw")
 
     assert target_row.key_legitimacy == 1
     assert len(target_row.signatures) == 2
@@ -82,10 +82,10 @@ def test_sign_row_requires_the_exact_key_vouched_for(ring_folder, tmp_path):
 
     UserService().login(carol.username)
     with pytest.raises(PermissionError):
-        public_ring.signRow(target_row.key_id, unrelated_row.key_id, b"carol-pw-2")
+        public_ring.signRow(target_row.user_email, target_row.key_id, unrelated_row.key_id, b"carol-pw-2")
 
     # the actual vouched-for key is permitted
-    public_ring.signRow(target_row.key_id, vouched_for_row.key_id, b"carol-pw")
+    public_ring.signRow(target_row.user_email, target_row.key_id, vouched_for_row.key_id, b"carol-pw")
     assert len(target_row.signatures) == 1
 
 
@@ -105,7 +105,7 @@ def test_deleting_a_private_key_cascades_and_strips_dependent_signatures(ring_fo
     bob_pub_path = _export_public_only(tmp_path, bob_row.public_key_pem, "bob_pub.pem")
     target_row = public_ring.addRow(bob_pub_path, KEY_SIZE, bob.email, ownerTrust=50)
 
-    public_ring.signRow(target_row.key_id, alice_row.key_id, b"alice-pw")
+    public_ring.signRow(target_row.user_email, target_row.key_id, alice_row.key_id, b"alice-pw")
     assert len(target_row.signatures) == 1
 
     # alice deletes her own signing key: it should disappear from the
@@ -114,5 +114,5 @@ def test_deleting_a_private_key_cascades_and_strips_dependent_signatures(ring_fo
     private_ring.deleteRow(alice_row.key_id)
 
     assert private_ring.findByKeyId(alice_row.key_id) is None
-    remaining_row = public_ring._findRowByKeyId(target_row.key_id)
+    remaining_row = public_ring.getRowByKeyId(target_row.key_id)
     assert remaining_row.signatures == []

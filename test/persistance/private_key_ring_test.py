@@ -71,15 +71,20 @@ def test_get_all_rows_only_returns_active_users_rows(ring_folder, active_user, s
     assert other_row not in ring.getAllRows()
 
 
-def test_find_by_key_id_ignores_ownership(ring_folder, active_user, second_user):
-    """Unlike getRowByKeyId, findByKeyId is the internal, unrestricted lookup."""
+def test_find_by_key_id_is_scoped_to_active_user(ring_folder, active_user, second_user):
+    """findByKeyId only sees the active user's own rows - a user must not learn
+    about keys that aren't theirs."""
     ring = PrivateKeyRing(ring_folder)
+    own_row = ring.generateKeyPair(KEY_SIZE, b"password")  # alice's
 
-    UserService().login(second_user.username)
-    other_row = ring.generateKeyPair(KEY_SIZE, b"password")
-    UserService().login(active_user.username)
-
+    UserService().login(second_user.username)  # bob
+    other_row = ring.generateKeyPair(KEY_SIZE, b"password")  # bob's
+    assert ring.findByKeyId(own_row.key_id) is None       # bob can't see alice's key
     assert ring.findByKeyId(other_row.key_id) is other_row
+
+    UserService().login(active_user.username)  # alice
+    assert ring.findByKeyId(own_row.key_id) is own_row
+    assert ring.findByKeyId(other_row.key_id) is None     # alice can't see bob's key
 
 
 # ---------------------------------------------------------------------------
@@ -156,11 +161,13 @@ def test_delete_row_missing_key_raises(ring_folder, active_user):
 
 
 def test_delete_row_rejects_non_owner(ring_folder, active_user, second_user):
+    """A non-owner can't delete (or even see) someone else's key: the scoped
+    lookup finds nothing, so deleteRow raises ValueError."""
     ring = PrivateKeyRing(ring_folder)
     row = ring.generateKeyPair(KEY_SIZE, b"password")
 
     UserService().login(second_user.username)
-    with pytest.raises(PermissionError):
+    with pytest.raises(ValueError):
         ring.deleteRow(row.key_id)
     UserService().login(active_user.username)
 
