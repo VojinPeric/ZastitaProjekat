@@ -21,7 +21,7 @@ from persistance.user import UserRing, UserService
 from persistance.private_key_ring import PrivateKeyRing
 from persistance.public_key_ring import PublicKeyRing
 from services.pem_service import PEMService
-from services.pgp_service import PgpService, PgpStep, ROOT_PATH, KEY_RING_DIRNAME
+from services.pgp_service import PgpService, PgpStep, KEY_RING_DIRNAME
 from pgp_messages import AlgorithmSymmetric, ROOT_PATH
 
 KEY_RING_FOLDER = os.path.join(ROOT_PATH, KEY_RING_DIRNAME)
@@ -116,7 +116,7 @@ class LoginFrame(ttk.Frame):
         username, email = data
         user = UserService().login(username, email)
         if not user:
-            messagebox.showerror("Greška", "Nesto je vec zauzeto tako da vas nemozemo ni logovati ni registrovati!.")
+            messagebox.showerror("Greška", "Vec postojaci username ili email!.")
             return None
 
         self.app.showMain()
@@ -173,7 +173,7 @@ class PrivateKeyRingTab(ttk.Frame):
         toolbar.pack(fill="x", pady=(0, 10))
 
         ttk.Label(toolbar, text="Veličina ključa:").pack(side="left")
-        self.keySize = tk.IntVar(value=2048)
+        self.keySize = tk.IntVar(value=2048) # used only for generation
         ttk.Radiobutton(toolbar, text="1024", variable=self.keySize, value=1024).pack(side="left")
         ttk.Radiobutton(toolbar, text="2048", variable=self.keySize, value=2048).pack(side="left", padx=(0, 10))
 
@@ -194,7 +194,7 @@ class PrivateKeyRingTab(ttk.Frame):
 
     def refresh(self):
         self.tree.delete(*self.tree.get_children())
-        for row in PrivateKeyRing(KEY_RING_FOLDER).getAllRows():
+        for row in PrivateKeyRing().getAllRows():
             self.tree.insert("", "end", iid=row.key_id.hex(),
                              values=(row.key_id.hex(), formatTimestamp(row.timestamp), row.user_email))
 
@@ -210,7 +210,7 @@ class PrivateKeyRingTab(ttk.Frame):
         if password is None:
             return
         try:
-            PrivateKeyRing(KEY_RING_FOLDER).generateKeyPair(self.keySize.get(), password)
+            PrivateKeyRing().generateKeyPair(self.keySize.get(), password)
             self.refresh()
             messagebox.showinfo("Uspeh", "Ključ je generisan.")
         except Exception as error:
@@ -225,7 +225,7 @@ class PrivateKeyRingTab(ttk.Frame):
         if password is None:
             return
         try:
-            PrivateKeyRing(KEY_RING_FOLDER).importKeyPair(path, password)
+            PrivateKeyRing().importKeyPair(path, password)
             self.refresh()
             messagebox.showinfo("Uspeh", "Key pair je uvezen.")
         except Exception as error:
@@ -240,7 +240,7 @@ class PrivateKeyRingTab(ttk.Frame):
         if not path:
             return
         try:
-            PrivateKeyRing(KEY_RING_FOLDER).exportPublicKey(keyId, path)
+            PrivateKeyRing().exportPublicKey(keyId, path)
             messagebox.showinfo("Uspeh", "Javni ključ je izvezen.")
         except Exception as error:
             messagebox.showerror("Greška", str(error))
@@ -257,7 +257,7 @@ class PrivateKeyRingTab(ttk.Frame):
         if not path:
             return
         try:
-            PrivateKeyRing(KEY_RING_FOLDER).exportKeyPair(keyId, password, path)
+            PrivateKeyRing().exportKeyPair(keyId, password, path)
             messagebox.showinfo("Uspeh", "Key pair je izvezen.")
         except Exception as error:
             messagebox.showerror("Greška", str(error))
@@ -269,7 +269,7 @@ class PrivateKeyRingTab(ttk.Frame):
         if not messagebox.askyesno("Potvrda", "Obrisati ovaj ključ (i sve njegove unose u public ringu)?"):
             return
         try:
-            PrivateKeyRing(KEY_RING_FOLDER).deleteRow(keyId)
+            PrivateKeyRing().deleteRow(keyId)
             self.refresh()
         except Exception as error:
             messagebox.showerror("Greška", str(error))
@@ -312,8 +312,8 @@ class PublicKeyRingTab(ttk.Frame):
         columns = ("keyId", "timestamp", "owner", "addedBy", "trust", "legitimacy", "signatures")
         self.tree = ttk.Treeview(self, columns=columns, show="headings")
         headings = {
-            "keyId": "Key ID", "timestamp": "Timestamp", "owner": "Vlasnik",
-            "addedBy": "Dodao", "trust": "Owner Trust", "legitimacy": "Legitimacy",
+            "keyId": "Key ID", "timestamp": "Timestamp", "owner": "User Email",
+            "addedBy": "Key Owner Email", "trust": "Owner Trust", "legitimacy": "Legitimacy",
             "signatures": "Br. potpisa",
         }
         for col, text in headings.items():
@@ -611,7 +611,7 @@ class SendMessageTab(ttk.Frame):
         self.refreshKeyChoices()
 
         # sopstveni ključevi za potpis
-        ownKeys = PrivateKeyRing(KEY_RING_FOLDER).getAllRows()
+        ownKeys = PrivateKeyRing().getAllRows()
         self.signerKeyCombo["values"] = [row.key_id.hex() for row in ownKeys]
         if ownKeys:
             self.signerKeyCombo.current(0)
@@ -623,12 +623,12 @@ class SendMessageTab(ttk.Frame):
         activeEmail = UserService().getActiveUser().email
         self.keyChoices = {}
 
-        for row in PublicKeyRing(KEY_RING_FOLDER).getAllRows():
+        for row in PublicKeyRing().getAllRows():
             if row.owner_email == recipient:
                 self.keyChoices[f"{row.key_id.hex()} (public ring)"] = row.key_id
 
         if recipient == activeEmail:
-            for row in PrivateKeyRing(KEY_RING_FOLDER).getAllRows():
+            for row in PrivateKeyRing().getAllRows():
                 self.keyChoices[f"{row.key_id.hex()} (moj ključ)"] = row.key_id
 
         self.recipientKeyCombo["values"] = list(self.keyChoices.keys())
@@ -684,8 +684,7 @@ class SendMessageTab(ttk.Frame):
         # naziv fajla: korisnikov unos + _guid, da ne bude istoimenih fajlova
         baseName = os.path.splitext(self.filenameEntry.get().strip())[0] or "msg"
         filename = f"{baseName}_{uuid.uuid4().hex[:8]}.pgp"
-        outputPath = os.path.join(recipient.message_box_folder_path, filename)
-        os.makedirs(recipient.message_box_folder_path, exist_ok=True)
+        outputPath = os.path.join(ROOT_PATH, recipient.message_box_folder_path, filename)
 
         try:
             self.pgpService.send(
