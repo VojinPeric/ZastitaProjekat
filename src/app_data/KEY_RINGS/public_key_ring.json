@@ -1,0 +1,142 @@
+[
+  {
+    "timestamp": "2026-07-07T22:52:39.452752+00:00",
+    "keyId": "50ec5c44cc7e3e4f",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+BRAP4H1oKm4iiBkKkm\nbpBpTIjqnR2+pB4kUFN6LP/NEP5Xa3Ju8A3ZivoV0oyL4dL+lDTNHXhBnt+p+Gu5\nLpzkqKn4xIedpQJwEdMZGE5hmc/a7k172qydW8jgJT6ILHD4eoUgTNGxBDynsooB\nEQLYrXsqJNh1BxptOsQ42r+9rr6/Vf0ENakP+mV4R/GVUEaSFT/9Cz+QxLZ9Oubr\nABDXm6wYUymCboFhhh0LYGYxeQP/m8BRaHST3/E1/WEEzapLGODcNF/MWqYH77No\neQ5yAY+6WWBKaZ5KNHoxKDLvhkwvIwHgH3x5YKBcCstXSFSiKnD3EmNQ7FxEzH4+\nTwIDAQAB\n-----END PUBLIC KEY-----\n",
+    "userEmail": "vojce@gmail.com",
+    "ownerEmail": "cope@gmail.com",
+    "ownerTrust": 100,
+    "keyLegitimacy": 1,
+    "signatures": [
+      {
+        "IDPU_signature": "8730121dd2f57401",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Pk/31NC3SW1n+uo1C+2\nEfIgySnqT3W3gGL8j0uxbi8Oq0BbkkHcE3PKGg9Jo1dPyVIwkwbpYQ0sldoNd+UZ\nYTJhW19L2PJBXoAAApcNmq/Wu8fty3r32VWEI73zAp2b1Ibd+0+O5Lqi4xA5neiR\nKpn4yAiDk6hfsGxCrnupoQqmxNySSB6Y6rPTS6E2e2xex/DniZ/G4+7OulhBtuHG\nLB/N1HIi8yUgl1/XTWHVK8SbEA/Q4rRu8YxlC6/kBSseggLVHidLku2j9grf+IPN\n4O63ezWfpYJwoldYwuzH4a0lntX3L0mJVgyL6ydm3ETJLlKrNrHrFEKHMBId0vV0\nAQIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "50ec5c44cc7e3e4f",
+        "Signature": "a1e0ccbca1f8b6bfa75df61994667a33c3a84d288bafa265716e5d9785b90f4e55bd9c4f47c9cf0315a579ce18077b146232ab474f0c1c2b53ecf3cf2c648b998950e0451735575e16bab416a4741b75347f2aad45a0c7bdc7c0d3c408ac99250649818a8564e0bea17e11a8842b2f962a588a34302a0e11312a3c4881263ec3c013aedbd6a2435d642f8212431c4f52f887e606e752a97ab9af0ede7bde07d2f0a1592183d7e8ddeee15c630193ed75b9a8277277f5437c8400d033716ebe9d7e522579f38cef965b1f532f2887ad0f748a8f4844ad7e22cc5317b16e10ec3d36a5f728c91687168b4df31644cafc1e47866b2f44e9270358a6a2f78a0239d4",
+        "Trust": 0
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-07-07T22:53:28.374681+00:00",
+    "keyId": "8730121dd2f57401",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Pk/31NC3SW1n+uo1C+2\nEfIgySnqT3W3gGL8j0uxbi8Oq0BbkkHcE3PKGg9Jo1dPyVIwkwbpYQ0sldoNd+UZ\nYTJhW19L2PJBXoAAApcNmq/Wu8fty3r32VWEI73zAp2b1Ibd+0+O5Lqi4xA5neiR\nKpn4yAiDk6hfsGxCrnupoQqmxNySSB6Y6rPTS6E2e2xex/DniZ/G4+7OulhBtuHG\nLB/N1HIi8yUgl1/XTWHVK8SbEA/Q4rRu8YxlC6/kBSseggLVHidLku2j9grf+IPN\n4O63ezWfpYJwoldYwuzH4a0lntX3L0mJVgyL6ydm3ETJLlKrNrHrFEKHMBId0vV0\nAQIDAQAB\n-----END PUBLIC KEY-----\n",
+    "userEmail": "cope@gmail.com",
+    "ownerEmail": "vojce@gmail.com",
+    "ownerTrust": 100,
+    "keyLegitimacy": 1,
+    "signatures": [
+      {
+        "IDPU_signature": "50ec5c44cc7e3e4f",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+BRAP4H1oKm4iiBkKkm\nbpBpTIjqnR2+pB4kUFN6LP/NEP5Xa3Ju8A3ZivoV0oyL4dL+lDTNHXhBnt+p+Gu5\nLpzkqKn4xIedpQJwEdMZGE5hmc/a7k172qydW8jgJT6ILHD4eoUgTNGxBDynsooB\nEQLYrXsqJNh1BxptOsQ42r+9rr6/Vf0ENakP+mV4R/GVUEaSFT/9Cz+QxLZ9Oubr\nABDXm6wYUymCboFhhh0LYGYxeQP/m8BRaHST3/E1/WEEzapLGODcNF/MWqYH77No\neQ5yAY+6WWBKaZ5KNHoxKDLvhkwvIwHgH3x5YKBcCstXSFSiKnD3EmNQ7FxEzH4+\nTwIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "8730121dd2f57401",
+        "Signature": "410f6c1f6c67bea7a940364514848c5e8572595c03bd241f7e0c422584ac760bfec14f829693f27a00b64b456f262607ee57e45bb80a45688d3bd258f1b589ea5bb1d965e9e5702826ebe1ffbc95a151377340bc27b083dc65fa4626f9a84e01495e64dbfcaa9866eb2ecc5c30a175492437608ae634c2893c11f8c64f2f58686a5dc032bbce20d027f49b55f929414a27ffb4679a725c4a1d764a042b3e8a6c470e677aeee8d3808ce52e1f447339b259af4e535d242f63143e452959587b7ca0df73d64de9d8613155db3ad7e19e58b1cc8e4e7a2a3efaa94c2c111b43dd3fbdaf8fa1940d0634655302dddd5d8a00ee2e975aadfe5ece1a12020cd294af29",
+        "Trust": 0
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-07-07T23:13:39.655809+00:00",
+    "keyId": "ebf602872f2b90d7",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo90bVndJbbH/iWJEwoIY\n1MPHfcSrogVqMdfgz2mHlauKtrduhnGtv56kpnAdNz5KI7WlduTo8iyZqVgPE14Z\nR3wPfm//N0vKM48ePgSpgVaTRI6JvPahiG2PP+Wnw5X+00FeRJJTbtSUjIffJpUJ\ni7Gc4L27E/XRtS6bxikIXWNFbLjJdx2jkfntNANIowhpOGc27j4836xJl09S0GH3\n9CCI0pJFAk1SnCe3JiNwnnfEFmZUNDgjTb8oT+bMa1su/Ats0ocdMHo6xx5wTkau\n4VXxiEyFg46WLrHRiUQJ7b94axl6ofP5vaaZSUlr6XFYjx/jB3YXPTXr9gKHLyuQ\n1wIDAQAB\n-----END PUBLIC KEY-----\n",
+    "userEmail": "cope@gmail.com",
+    "ownerEmail": "user1@gmail.com",
+    "ownerTrust": 50,
+    "keyLegitimacy": 1,
+    "signatures": [
+      {
+        "IDPU_signature": "50ec5c44cc7e3e4f",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+BRAP4H1oKm4iiBkKkm\nbpBpTIjqnR2+pB4kUFN6LP/NEP5Xa3Ju8A3ZivoV0oyL4dL+lDTNHXhBnt+p+Gu5\nLpzkqKn4xIedpQJwEdMZGE5hmc/a7k172qydW8jgJT6ILHD4eoUgTNGxBDynsooB\nEQLYrXsqJNh1BxptOsQ42r+9rr6/Vf0ENakP+mV4R/GVUEaSFT/9Cz+QxLZ9Oubr\nABDXm6wYUymCboFhhh0LYGYxeQP/m8BRaHST3/E1/WEEzapLGODcNF/MWqYH77No\neQ5yAY+6WWBKaZ5KNHoxKDLvhkwvIwHgH3x5YKBcCstXSFSiKnD3EmNQ7FxEzH4+\nTwIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "ebf602872f2b90d7",
+        "Signature": "0a4d0b4212fe10cc1ab3eb25cde56c0a845e2f543b4e7209586b26be18579afcaf596787256fe9be2b5d65b8ea0c49b22216a80520ec421f1e1d3040a46b2fa201895222aaaaa126850df953ca4ad4b4f5190e84281efc85a05ffcbbd9a028938555e90ebaa10d0023c3402973cd86c7ce9cc64566dc6b0a13b87668ae7b78a31628eb657c7f0b3a6a57e1c416b932ed39f74596ee9f52ae3c113a4f5863293864f6cba55568c7df057c3a0c7b8f2fd1ce4ab3445f3b01fc079af6d45e917138b37b81f15693f18d6560075dede6fff77471ee27b9855626a42c7a19676a0feeb2f4ebeffc64c48d9bdf91f77987231eda0c5828de57bfcda955a6cc566ae6d1",
+        "Trust": 0
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-07-07T23:13:44.155555+00:00",
+    "keyId": "a6f7e2efd5208e3d",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw9K6lsfe72i7dRno8Tiz\nlmLauyD+/jkzt6DA3vVpPr68aL6ObSWuedT1rElD4L9z3LUmEhoGIhqvpP58PdYc\nvNEqMkbvsIql1VMrYwrMjDCuUtBTv14ps9+KN+hdocHgeTt4ZWgyRtnf+gCYH5T+\nHzqeBSSRdDjAfjAW/P7Z/Wr9HgjLTeki4MkOh3BZ/RjlGV6NZUTlptzWfTc+1Gnf\nahbIy+9p39s2vqwzaHvVTE1n3heIYjLUIeWCd+p1RFSv5+7doVSwws9+bmqvGUq9\nE/W7m/fSqHmFPENv7n9nu2/3dZtIGJ9UWIhsfw5OaPBF/+hVfWqK5JCm9+Lv1SCO\nPQIDAQAB\n-----END PUBLIC KEY-----\n",
+    "userEmail": "cope@gmail.com",
+    "ownerEmail": "user2@gmail.com",
+    "ownerTrust": 50,
+    "keyLegitimacy": 1,
+    "signatures": [
+      {
+        "IDPU_signature": "50ec5c44cc7e3e4f",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+BRAP4H1oKm4iiBkKkm\nbpBpTIjqnR2+pB4kUFN6LP/NEP5Xa3Ju8A3ZivoV0oyL4dL+lDTNHXhBnt+p+Gu5\nLpzkqKn4xIedpQJwEdMZGE5hmc/a7k172qydW8jgJT6ILHD4eoUgTNGxBDynsooB\nEQLYrXsqJNh1BxptOsQ42r+9rr6/Vf0ENakP+mV4R/GVUEaSFT/9Cz+QxLZ9Oubr\nABDXm6wYUymCboFhhh0LYGYxeQP/m8BRaHST3/E1/WEEzapLGODcNF/MWqYH77No\neQ5yAY+6WWBKaZ5KNHoxKDLvhkwvIwHgH3x5YKBcCstXSFSiKnD3EmNQ7FxEzH4+\nTwIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "a6f7e2efd5208e3d",
+        "Signature": "34bffe8015837b5f31175245ad7e35f9e6c237946e73aeba3aefc49d8e7fe60b1588bd862286e487f0692bb711b385ac49a7fb6eebadfa42995b35a9918bdc4313e97d21d0518db6604549052c07847c3c3225be37e045284ee13297f26d8da6320f6450f304975753c9f0ed8f31146cf56d2afa91665ce7ce66ac1c1bebe68889a3bddddc792b1d929f8e08c6bbec0d62f430677b397eb6f0d7e621241075861685beb583de7283377c6087b32fb095b07030863e5f4c26cdb99c374f720b494f8e79c57c79508ee909cc0f13553481931605d79fcd985e144fb303d75c02fae85ab75678d84a36ef0ac0e3af3f6042dc7442b201b938912894186ff35b29e4",
+        "Trust": 0
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-07-07T23:13:49.484873+00:00",
+    "keyId": "877ab1bf29c569a3",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuvoouh2PCrdVeGOx+GEj\nFka7hEwQfhP/TNpD/RG7Vxam59ledKXDgoRE1E1XEO88CVd7qQQ7i+tizCQizUZa\nFGrvVbJhME7iNh1FmfO5G6QZTiEqFM43lYbS01qeUKR/zdDheaaDnaf/+mO2EsAW\nNOf7GI431JftR5F+tGa40WTT+A+9lfYEZ6mQEm7xvL6Nu03BNuhQePhO/ENGBZGG\n3KIZ/kGzmOzhLwYZV4yApv7jFww7U0wFUpHuAeag1TwRwH6MmOwuTT/nOA3QZVf+\nKuUE/tyCkHkr0WHQhCSdfU58wOQtLZjukCjTSFA3G8vHY9YyiiySMpiHerG/KcVp\nowIDAQAB\n-----END PUBLIC KEY-----\n",
+    "userEmail": "cope@gmail.com",
+    "ownerEmail": "user3@gmail.com",
+    "ownerTrust": 50,
+    "keyLegitimacy": 1,
+    "signatures": [
+      {
+        "IDPU_signature": "50ec5c44cc7e3e4f",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+BRAP4H1oKm4iiBkKkm\nbpBpTIjqnR2+pB4kUFN6LP/NEP5Xa3Ju8A3ZivoV0oyL4dL+lDTNHXhBnt+p+Gu5\nLpzkqKn4xIedpQJwEdMZGE5hmc/a7k172qydW8jgJT6ILHD4eoUgTNGxBDynsooB\nEQLYrXsqJNh1BxptOsQ42r+9rr6/Vf0ENakP+mV4R/GVUEaSFT/9Cz+QxLZ9Oubr\nABDXm6wYUymCboFhhh0LYGYxeQP/m8BRaHST3/E1/WEEzapLGODcNF/MWqYH77No\neQ5yAY+6WWBKaZ5KNHoxKDLvhkwvIwHgH3x5YKBcCstXSFSiKnD3EmNQ7FxEzH4+\nTwIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "877ab1bf29c569a3",
+        "Signature": "6ce12e6c6d456cbd3ca5428640c190f5b678c021cb46a9131fbb7043dbf9af77e8e93d5b18164322d335fd020ae64f9bafec92a9230c97c172e285cc3556785527b9598a4d69163e5459e5d0e203685667ce827e5a5bbb3dc5e99f708f138ab909495b635976dea73eb7cabbb1a956a4e3fb9a8a8f84e507b6bbb0d44004f86d95ee77ecaedabbe25fc168bbc53167a2a520cfc833b20f251ac7da9ef0732a26718d54715d5fd546b06e7ba37ea85cbe3cd84b1996cd19ad11b6154a6f5e39649873c477aecf1521830e21d643e943205b23e2e98b5cb0b38824ad67ad97cdd088656e17c956420aaddfde1270c775727b573d1ecc2dfd4f5f58ec6b11608368",
+        "Trust": 0
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-07-07T23:15:16.202359+00:00",
+    "keyId": "37a078c5dbfc5d21",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuvhhA5BmdgqeU2QrZJHc\nyXpI2J5OokNwSFgNQglXWPVqNb9FW93gtPZW69jZznhCRB+6mHskOt0Iyae4Z/UA\ng3DCEobH5w5zvCREnByN5/GKO6TbrJzJjR7BVMJaH5fFV4s3besV0nNtLtionKBb\noFhLFcQVCYeQ/y6AlXmmTgGbmzhSPAOSqoQA5rVBmJohG208ed/Xqzm1ny8CzXH+\nnJ1tO5VxQy5LGC7rPd68/hptD9uB6m38fF/xuvRHbpqHrUGVWbmY+/sQnmHUecbg\ndYPpsuoyF0kSi+z/9S6G+B9pVz3MEEnaAYDoBpoAZMnO19n6IzTj5cw3oHjF2/xd\nIQIDAQAB\n-----END PUBLIC KEY-----\n",
+    "userEmail": "cope@gmail.com",
+    "ownerEmail": "vojce@gmail.com",
+    "ownerTrust": 50,
+    "keyLegitimacy": 1,
+    "signatures": [
+      {
+        "IDPU_signature": "8730121dd2f57401",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Pk/31NC3SW1n+uo1C+2\nEfIgySnqT3W3gGL8j0uxbi8Oq0BbkkHcE3PKGg9Jo1dPyVIwkwbpYQ0sldoNd+UZ\nYTJhW19L2PJBXoAAApcNmq/Wu8fty3r32VWEI73zAp2b1Ibd+0+O5Lqi4xA5neiR\nKpn4yAiDk6hfsGxCrnupoQqmxNySSB6Y6rPTS6E2e2xex/DniZ/G4+7OulhBtuHG\nLB/N1HIi8yUgl1/XTWHVK8SbEA/Q4rRu8YxlC6/kBSseggLVHidLku2j9grf+IPN\n4O63ezWfpYJwoldYwuzH4a0lntX3L0mJVgyL6ydm3ETJLlKrNrHrFEKHMBId0vV0\nAQIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "37a078c5dbfc5d21",
+        "Signature": "1d75881bfca7cb720682d4c6f7688b5f884ccfadd49436fdf43b453c9fb155177f767d098509c67f2c8a6f55897e6f138fc471596debfab102fccb172d8e753b6e11d6327c4616759180c2fba7191507d384b9978bb35092cd4c34f2033a706c207ee37b9502f3151adf1642975aaa8dddd4f01160c4f99cf7ce4bde6ad7bf580be626a3d883a9a7a6dce7f412ab5a9c2fefde9ea31e118f1b544fcba64f6646a0770bfb4b365a59ef8059cd1e478dd65612faa019198f79ea66c6c6560160671a31df939a981cf4b1157e36b6069378390de53bd5cb44cec296d4cc7f09589880473c8bf012139b7b2afb42b3480b196c86f0eed798fcc16f3e313bbaec5845",
+        "Trust": 100
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-07-07T23:15:23.186967+00:00",
+    "keyId": "514da419d78f27eb",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsPV+QnQwBniHeZ66rwi4\nKwYAwSnYZ0lXje4oIL6lTw2OS8j+6F7ZPDiN9/X3IUJwa85iz447ZF0wick3B/8c\nEJA4CiI6gdgLmzL9hmQTH0Lm9MQke0d3B1vX7USnuE56kkb5nshm9rfHnEyU2DwJ\nsL39f+Eft4alhNDuObRqOYbZuvkCC3xD9Xg9vwM7KmvugrBXwCj6LMF0aGO97CbN\n4d0YxIpTSTc+yE6OALb38zWCnLgfKxGTka49xXj2Nhj9sgsIrGg9bcuXYGxeYVoV\nQwt+ymCSyzwStGlhJb1/xEeaHWaLL0Ip1nswnwK6MUdz87nYAXya/HJRTaQZ148n\n6wIDAQAB\n-----END PUBLIC KEY-----\n",
+    "userEmail": "cope@gmail.com",
+    "ownerEmail": "vojce@gmail.com",
+    "ownerTrust": 50,
+    "keyLegitimacy": 1,
+    "signatures": [
+      {
+        "IDPU_signature": "ebf602872f2b90d7",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo90bVndJbbH/iWJEwoIY\n1MPHfcSrogVqMdfgz2mHlauKtrduhnGtv56kpnAdNz5KI7WlduTo8iyZqVgPE14Z\nR3wPfm//N0vKM48ePgSpgVaTRI6JvPahiG2PP+Wnw5X+00FeRJJTbtSUjIffJpUJ\ni7Gc4L27E/XRtS6bxikIXWNFbLjJdx2jkfntNANIowhpOGc27j4836xJl09S0GH3\n9CCI0pJFAk1SnCe3JiNwnnfEFmZUNDgjTb8oT+bMa1su/Ats0ocdMHo6xx5wTkau\n4VXxiEyFg46WLrHRiUQJ7b94axl6ofP5vaaZSUlr6XFYjx/jB3YXPTXr9gKHLyuQ\n1wIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "514da419d78f27eb",
+        "Signature": "1579f71c221a7c7859bfe46e279269b19f4ba54615dd8287c57fb89470463052e5a02f762c3450a25af3823c161b96aa9f7b9b5f272acec83a9942bb05ad108458c83a23011f340790d46d6e3acf669de12a7b82ccf9d51880ded8ad88ed0b25ff10056dbc36420537a21f5d0c2aad819c88ec55da5eaae58f0d0b6d94ae9fe694d61fbe3395b89cd7696a6415c3245314c5e190e014bfbbbd9e0df86ef32b58355e04931f2b672b7d19185bc43be4054bb3c5e159d1e87cd9959ebc3198a85a0352acf1fb2a034c1387f2fc5981a5e0ab92f112d6094a5e0f5e4b2f29cc33590c086fcecebff03cdd4b66ab41cad6f470868c7ee29d3013e16ac6e9facff15c",
+        "Trust": 50
+      },
+      {
+        "IDPU_signature": "a6f7e2efd5208e3d",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw9K6lsfe72i7dRno8Tiz\nlmLauyD+/jkzt6DA3vVpPr68aL6ObSWuedT1rElD4L9z3LUmEhoGIhqvpP58PdYc\nvNEqMkbvsIql1VMrYwrMjDCuUtBTv14ps9+KN+hdocHgeTt4ZWgyRtnf+gCYH5T+\nHzqeBSSRdDjAfjAW/P7Z/Wr9HgjLTeki4MkOh3BZ/RjlGV6NZUTlptzWfTc+1Gnf\nahbIy+9p39s2vqwzaHvVTE1n3heIYjLUIeWCd+p1RFSv5+7doVSwws9+bmqvGUq9\nE/W7m/fSqHmFPENv7n9nu2/3dZtIGJ9UWIhsfw5OaPBF/+hVfWqK5JCm9+Lv1SCO\nPQIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "514da419d78f27eb",
+        "Signature": "85984bc9b92d9d43edfd2682d164c6f603510ee5ae164ab52e13b9bc4cc30a4688f8ea73b8830539b812efcead8c79b4bafb4f468a602a1dfc1c356b7f97f323fa89c2f00fed186b75d7d67b50c04e70c10ccd77a149503f87a85d82dbe4da3760d79a9859f908e70198074cf8c50d5c0886d62b9b9c1fd43a8762da8b1e1af868a5ec6dba2880e77f55e8059b365afc3a5689d49da27ea3c0616cf69fd0d462386a4cd3a71a294b57d4e2fb727536b0f594f032745f3ea146582f10e35f6f3da07c042d73db59917f23d05060f88fe0bf85c4ed2e4d94965b254e01387b86c61e3fb8eb9f6f8c1d2cc6abc35b34799c8042620e269af6cb72a44e1458a491a4",
+        "Trust": 50
+      },
+      {
+        "IDPU_signature": "877ab1bf29c569a3",
+        "PU_signature": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuvoouh2PCrdVeGOx+GEj\nFka7hEwQfhP/TNpD/RG7Vxam59ledKXDgoRE1E1XEO88CVd7qQQ7i+tizCQizUZa\nFGrvVbJhME7iNh1FmfO5G6QZTiEqFM43lYbS01qeUKR/zdDheaaDnaf/+mO2EsAW\nNOf7GI431JftR5F+tGa40WTT+A+9lfYEZ6mQEm7xvL6Nu03BNuhQePhO/ENGBZGG\n3KIZ/kGzmOzhLwYZV4yApv7jFww7U0wFUpHuAeag1TwRwH6MmOwuTT/nOA3QZVf+\nKuUE/tyCkHkr0WHQhCSdfU58wOQtLZjukCjTSFA3G8vHY9YyiiySMpiHerG/KcVp\nowIDAQAB\n-----END PUBLIC KEY-----\n",
+        "IDPU_signed": "514da419d78f27eb",
+        "Signature": "56f7d4cf450b06b61f6bc3376ebc872c3cfdb3057f8899291cfeee45e99491220f8eb65121f6be9566bb8c6ea982216f81c080e3622b3dc1c3556a3c5d4a4f171bedcad98875ff429ed0170fedca7299849bc467a877b1f22fe1d7780e9fc3d06de51d0e8504c9afbe4923c28d3199cbb294182c976c9a22cfc8851d4d408d6a491892a9427c28a36f17ad72b7fea5107cd616ad02cec35fa56e1ab08f5d521ad131d3b05a8a33eafa49de12122c2e30094e5920061ae6defb1199dee452820d3145247573ddfbce87e5088f35708ee590e5c3a3c6e9aba8f7bee2d42687f205feb88b0d348569c8f0f741aef4ea5375f843ba48d694126bd1f5e7a1e7fefb11",
+        "Trust": 50
+      }
+    ]
+  }
+]
