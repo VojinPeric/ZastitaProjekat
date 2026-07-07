@@ -1,0 +1,326 @@
+"""
+Top-level PGP service.
+
+Orchestrates the send/receive pipeline for the currently active user, composing
+the per-step services rather than reimplementing them. Which steps run is
+configurable (PgpStep), so a message can go through nothing (plain pass-through)
+up to the whole pipeline.
+
+Send order follows the PGP scheme: authentication (sign) -> compression ->
+encryption (confidentiality) -> radix-64 conversion. Receive reverses it.
+
+On-disk message format (see _packContainer/_unpackContainer):
+
+    +-----------+-----------+-------------------------------+
+    | magic (4) | flags (1) |        payload (rest)         |
+    +-----------+-----------+-------------------------------+
+
+`flags` is the PgpStep value of the steps that were actually applied, so the
+receiver reads it first and knows exactly which packets to unwrap and in which
+order - no guessing. `payload` is the message after those steps; each step's own
+bytes (SignedMessage / EncryptedMessage) already carry the key ids, algorithm,
+iv, etc. needed to reverse it.
+"""
+
+import os
+import struct
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from enum import Flag
+
+from pgp_messages import Message, AlgorithmSymmetric
+from persistance.user import UserService
+from persistance.private_key_ring import PrivateKeyRing
+from persistance.public_key_ring import PublicKeyRing
+from services.authentication_service import (
+    AuthenticationService,
+    toBytesFromSignedMessage,
+    fromBytesToSignedMessage,
+)
+from services.encryption_service import (
+    EncryptionService,
+    toBytesFromEncryptedMessage,
+    fromBytesToEncryptedMessage,
+)
+from services.compression_service import CompressionService
+from services.compatibility_service import CompatibilityService
+from services.segmentation_service import SegmentationService
+
+KEY_RING_DIRNAME = "key_rings"
+
+# container framing
+MAGIC = b"PGP1"
+_FLAGS_FORMAT = ">B"
+
+# innermost Message framing: timestamp (uint32) + filename length (uint16),
+# then the filename and the message body
+_MESSAGE_HEADER_FORMAT = ">IH"
+_MESSAGE_HEADER_SIZE = 6
+
+
+class PgpStep(Flag):
+    """Which transformation steps of the PGP pipeline to apply. Combine with
+    `|` (e.g. PgpStep.AUTHENTICATION | PgpStep.ENCRYPTION); PgpStep.NONE is a
+    plain pass-through, PgpStep.ALL runs the whole pipeline."""
+    NONE = 0
+    AUTHENTICATION = 1
+    COMPRESSION = 2
+    ENCRYPTION = 4
+    CONVERSION = 8
+    ALL = AUTHENTICATION | COMPRESSION | ENCRYPTION | CONVERSION
+
+
+@dataclass
+class ReceiveResult:
+    """Outcome of receive(): the recovered message plus what was done to it and,
+    if it was signed, whether the signature checks out and who signed it."""
+    message: Message
+    applied_steps: PgpStep
+    signature_valid: bool | None   # None when the message was not signed
+    signer_key_id: bytes | None
+    signer_email: str | None
+
+
+class PgpService:
+    """
+    Per-user entry point to the PGP pipeline. Everything belonging to a user
+    lives under <root_path>/<user email>/:
+
+        <root_path>/<email>/
+            key_rings/          -> private_key_ring.json + public_key_ring.json
+            <message files>     -> sent/received messages, chosen by the user
+
+    The active user (from UserService) decides whose folder this is, so a user
+    must be logged in before a PgpService is created. `steps` is the default
+    selection of pipeline steps; send() can override it per message.
+    """
+
+    def __init__(self, root_path: str, steps: PgpStep = PgpStep.NONE):
+        self._userService = UserService()
+        activeUser = self._userService.getActiveUser()
+        if activeUser is None:
+            raise ValueError("no active user; log in through UserService before creating a PgpService")
+
+        self.steps = steps
+
+        # the user's folder is named after their email; messages live directly here
+        self.userFolderPath = os.path.join(root_path, activeUser.email)
+        os.makedirs(self.userFolderPath, exist_ok=True)
+
+        keyRingFolder = os.path.join(self.userFolderPath, KEY_RING_DIRNAME)
+
+        self._privateKeyRing = PrivateKeyRing(keyRingFolder)
+        self._publicKeyRing = PublicKeyRing(keyRingFolder)
+        self._authenticationService = AuthenticationService()
+        self._encryptionService = EncryptionService()
+        self._compressionService = CompressionService()
+        self._compatibilityService = CompatibilityService()
+        self._segmentationService = SegmentationService()
+
+    # -----------------------------------------------------------------
+    # send
+    # -----------------------------------------------------------------
+
+    def send(
+        self,
+        message: str,
+        output_file_path: str,
+        *,
+        filename: str = "",
+        steps: PgpStep | None = None,
+        signer_key_id: bytes | None = None,
+        signer_password: bytes | None = None,
+        recipient_key_id: bytes | None = None,
+        algorithm: AlgorithmSymmetric = AlgorithmSymmetric.AES,
+    ) -> None:
+        """Protect `message` according to `steps` (defaults to self.steps) and
+        write the resulting self-describing packet to `output_file_path`.
+
+        Signing (AUTHENTICATION) needs signer_key_id + signer_password - a key
+        pair from the active user's own private ring. Encryption (ENCRYPTION)
+        needs recipient_key_id - a public key known to the active user (their
+        own, or one imported into the public ring) - and a symmetric algorithm.
+        """
+        steps = self.steps if steps is None else steps
+
+        messageObj = Message()
+        messageObj.msg = message
+        messageObj.filename = filename
+        payload = _toBytesFromMessage(messageObj)
+
+        appliedSteps = PgpStep.NONE
+
+        if bool(steps & PgpStep.AUTHENTICATION):
+            if signer_key_id is None or signer_password is None:
+                raise ValueError("signing requires signer_key_id and signer_password")
+            privateKeyPem = self._privateKeyRing.getDecryptedPrivateKeyPem(signer_key_id, signer_password)
+            signed = self._authenticationService.sign(payload, privateKeyPem)
+            payload = toBytesFromSignedMessage(signed)
+            appliedSteps |= PgpStep.AUTHENTICATION
+
+        if bool(steps & PgpStep.COMPRESSION):
+            payload = self._compressionService.compress(payload)
+            appliedSteps |= PgpStep.COMPRESSION
+
+        if bool(steps & PgpStep.ENCRYPTION):
+            if recipient_key_id is None:
+                raise ValueError("encryption requires recipient_key_id")
+            recipientPublicKeyPem = self._findPublicKeyPemByKeyId(recipient_key_id)
+            if recipientPublicKeyPem is None:
+                raise ValueError(f"no public key found for keyId {recipient_key_id.hex()}")
+            encrypted = self._encryptionService.encrypt(payload, recipientPublicKeyPem, algorithm)
+            payload = toBytesFromEncryptedMessage(encrypted)
+            appliedSteps |= PgpStep.ENCRYPTION
+
+        if bool(steps & PgpStep.CONVERSION):
+            payload = self._compatibilityService.encode(payload).encode("ascii")
+            appliedSteps |= PgpStep.CONVERSION
+
+        with open(output_file_path, "wb") as file:
+            file.write(_packContainer(appliedSteps, payload))
+
+    # -----------------------------------------------------------------
+    # receive
+    # -----------------------------------------------------------------
+
+    def receive(self, input_file_path: str, *, password: bytes | None = None) -> ReceiveResult:
+        """Read the packet at `input_file_path`, reverse whatever steps it
+        records, and return the recovered message plus verification info.
+
+        Decryption needs `password` for the active user's private key. Raises
+        ValueError with a clear message if the file is unrecognized or
+        decryption/decompression fails; signature failure is reported (not
+        raised) via ReceiveResult.signature_valid.
+        """
+        with open(input_file_path, "rb") as file:
+            data = file.read()
+
+        appliedSteps, payload = _unpackContainer(data)
+
+        if bool(appliedSteps & PgpStep.CONVERSION):
+            payload = self._compatibilityService.decode(payload.decode("ascii"))
+
+        if bool(appliedSteps & PgpStep.ENCRYPTION):
+            payload = self._decrypt(payload, password)
+
+        if bool(appliedSteps & PgpStep.COMPRESSION):
+            try:
+                payload = self._compressionService.decompress(payload)
+            except Exception as error:
+                raise ValueError(f"decompression failed: {error}") from error
+
+        signature_valid: bool | None = None
+        signer_key_id: bytes | None = None
+        signer_email: str | None = None
+
+        if bool(appliedSteps & PgpStep.AUTHENTICATION):
+            signed = fromBytesToSignedMessage(payload)
+            signer_key_id = signed.keyId
+            signer_email = self._emailForKeyId(signed.keyId)
+            signerPublicKeyPem = self._findPublicKeyPemByKeyId(signed.keyId)
+            signature_valid = (
+                self._authenticationService.verify(signed, signerPublicKeyPem)
+                if signerPublicKeyPem is not None
+                else False
+            )
+            payload = signed.rawMessage
+
+        return ReceiveResult(
+            message=_fromBytesToMessage(payload),
+            applied_steps=appliedSteps,
+            signature_valid=signature_valid,
+            signer_key_id=signer_key_id,
+            signer_email=signer_email,
+        )
+
+    # -----------------------------------------------------------------
+    # helpers
+    # -----------------------------------------------------------------
+
+    def _decrypt(self, payload: bytes, password: bytes | None) -> bytes:
+        encrypted = fromBytesToEncryptedMessage(payload)
+        if self._privateKeyRing.findByKeyId(encrypted.keyId) is None:
+            raise ValueError(
+                "decryption failed: no private key in your ring matches this message; "
+                "you may not be the intended recipient"
+            )
+        if password is None:
+            raise ValueError("this message is encrypted; a private key password is required to decrypt it")
+        try:
+            privateKeyPem = self._privateKeyRing.getDecryptedPrivateKeyPem(encrypted.keyId, password)
+            return self._encryptionService.decrypt(encrypted, privateKeyPem)
+        except Exception as error:
+            raise ValueError(f"decryption failed: {error}") from error
+
+    def _findPublicKeyPemByKeyId(self, keyId: bytes) -> bytes | None:
+        """The public key PEM for keyId, whether it's one of the active user's
+        own keys (private ring) or a correspondent's imported key (public ring)."""
+        ownRow = self._privateKeyRing.findByKeyId(keyId)
+        if ownRow is not None:
+            return ownRow.public_key_pem
+        importedRow = self._publicKeyRing.getRowByKeyId(keyId)
+        if importedRow is not None:
+            return importedRow.public_key_pem
+        return None
+
+    def _emailForKeyId(self, keyId: bytes) -> str | None:
+        """The email associated with keyId: the key owner for an imported key,
+        or the active user for one of their own keys."""
+        importedRow = self._publicKeyRing.getRowByKeyId(keyId)
+        if importedRow is not None:
+            return importedRow.owner_email
+        ownRow = self._privateKeyRing.findByKeyId(keyId)
+        if ownRow is not None:
+            return ownRow.user_email
+        return None
+
+    def _isStepEnabled(self, step: PgpStep) -> bool:
+        return bool(self.steps & step)
+
+
+# ---------------------------------------------------------------------
+# container framing
+# ---------------------------------------------------------------------
+
+def _packContainer(appliedSteps: PgpStep, payload: bytes) -> bytes:
+    return MAGIC + struct.pack(_FLAGS_FORMAT, appliedSteps.value) + payload
+
+
+def _unpackContainer(data: bytes) -> tuple[PgpStep, bytes]:
+    header_size = len(MAGIC) + 1
+    if len(data) < header_size or data[:len(MAGIC)] != MAGIC:
+        raise ValueError("unrecognized file: not a PGP message produced by this application")
+    flags = struct.unpack(_FLAGS_FORMAT, data[len(MAGIC):header_size])[0]
+    try:
+        appliedSteps = PgpStep(flags)
+    except ValueError as error:
+        raise ValueError(f"corrupt PGP message: unknown step flags {flags:#04x}") from error
+    return appliedSteps, data[header_size:]
+
+
+# ---------------------------------------------------------------------
+# innermost Message framing
+# ---------------------------------------------------------------------
+
+def _toBytesFromMessage(message: Message) -> bytes:
+    filenameBytes = message.filename.encode("utf-8")
+    messageBytes = message.msg.encode("utf-8")
+    timestamp = int(message.timestamp.timestamp())
+    return (
+        struct.pack(_MESSAGE_HEADER_FORMAT, timestamp, len(filenameBytes))
+        + filenameBytes
+        + messageBytes
+    )
+
+
+def _fromBytesToMessage(data: bytes) -> Message:
+    timestamp, filenameLen = struct.unpack(_MESSAGE_HEADER_FORMAT, data[:_MESSAGE_HEADER_SIZE])
+    offset = _MESSAGE_HEADER_SIZE
+    filename = data[offset:offset + filenameLen].decode("utf-8")
+    offset += filenameLen
+
+    message = Message()
+    message.timestamp = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    message.filename = filename
+    message.msg = data[offset:].decode("utf-8")
+    return message
