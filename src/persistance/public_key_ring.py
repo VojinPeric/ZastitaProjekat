@@ -155,16 +155,16 @@ class PublicKeyRing:
     # read
     # -----------------------------------------------------------------
 
-    def _findRowByKeyId(self, keyId: bytes) -> PublicKeyRingRow | None:
-        return next((row for row in self.rows if row.key_id == keyId), None)
+    def _findRowByKeyId(self, keyId: bytes, email: str) -> PublicKeyRingRow | None:
+        return next((row for row in self.rows if row.key_id == keyId and row.user_email == email), None)
 
     def getRowByKeyId(self, keyId: bytes) -> PublicKeyRingRow | None:
         """Public read: only returns a row belonging to active_user's own
         ring perspective (row.user_email == active_user.email). Signing
         bypasses this, since active_user is allowed to sign rows added by
         other people."""
-        row = self._findRowByKeyId(keyId)
-        if row is None or row.user_email != UserService().getActiveUser().email:
+        row = self._findRowByKeyId(keyId, UserService().getActiveUser().email)
+        if row is None:
             return None
         return row
 
@@ -214,7 +214,7 @@ class PublicKeyRing:
         """Delete the row for keyId, only if active_user is its owner (the
         one who added it). Also strips every signature made by that key
         from every other row, and recalculates their keyLegitimacy."""
-        row = self._findRowByKeyId(keyId)
+        row = self._findRowByKeyId(keyId, UserService().getActiveUser().email)
         if row is None:
             return False
         if row.user_email != UserService().getActiveUser().email:
@@ -244,11 +244,11 @@ class PublicKeyRing:
     # signing
     # -----------------------------------------------------------------
 
-    def signRow(self, rowKeyId: bytes, signerKeyId: bytes, password: bytes) -> Signature:
+    def signRow(self, rowOwnerEmail: str, rowKeyId: bytes, signerKeyId: bytes, password: bytes) -> Signature:
         """active_user signs the row identified by rowKeyId, using the key
         pair signerKeyId (must be active_user's own, found via the private
         key ring and decrypted with `password`)."""
-        row = self._findRowByKeyId(rowKeyId)
+        row = self._findRowByKeyId(rowKeyId, rowOwnerEmail)
         if row is None:
             raise ValueError(f"no public key ring row for keyId {rowKeyId.hex()}")
 
@@ -261,8 +261,6 @@ class PublicKeyRing:
         privateRow = privateKeyRing.findByKeyId(signerKeyId)
         if privateRow is None:
             raise ValueError(f"no private key ring entry for keyId {signerKeyId.hex()}")
-        if privateRow.user_email != UserService().getActiveUser().email:
-            raise PermissionError("can only sign with your own key pair")
 
         if any(sig.idpu_signature == signerKeyId for sig in row.signatures):
             raise ValueError("this key has already signed this row")

@@ -105,21 +105,12 @@ class PrivateKeyRing:
     # -----------------------------------------------------------------
 
     def findByKeyId(self, keyId: bytes) -> PrivateKeyRingRow | None:
-        return next((row for row in self.rows if row.key_id == keyId), None)
+        return next((row for row in self.rows if row.key_id == keyId and row.user_email == UserService().getActiveUser().email), None)
 
     def _requireOwnRow(self, keyId: bytes) -> PrivateKeyRingRow:
         row = self.findByKeyId(keyId)
         if row is None:
             raise ValueError(f"no private key ring row for keyId {keyId.hex()}")
-        if row.user_email != UserService().getActiveUser().email:
-            raise PermissionError("only the row's owner can access it")
-        return row
-
-    def getRowByKeyId(self, keyId: bytes) -> PrivateKeyRingRow | None:
-        """Read a row, restricted to rows owned by active_user."""
-        row = self.findByKeyId(keyId)
-        if row is None or row.user_email != UserService().getActiveUser().email:
-            return None
         return row
 
     def getAllRows(self) -> list[PrivateKeyRingRow]:

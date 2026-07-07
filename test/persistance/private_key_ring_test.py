@@ -71,18 +71,6 @@ def test_get_all_rows_only_returns_active_users_rows(ring_folder, active_user, s
     assert other_row not in ring.getAllRows()
 
 
-def test_get_row_by_key_id_hides_rows_owned_by_other_users(ring_folder, active_user, second_user):
-    ring = PrivateKeyRing(ring_folder)
-    own_row = ring.generateKeyPair(KEY_SIZE, b"password")
-
-    UserService().login(second_user.username)
-    other_row = ring.generateKeyPair(KEY_SIZE, b"password")
-    UserService().login(active_user.username)
-
-    assert ring.getRowByKeyId(own_row.key_id) is own_row
-    assert ring.getRowByKeyId(other_row.key_id) is None
-
-
 def test_find_by_key_id_ignores_ownership(ring_folder, active_user, second_user):
     """Unlike getRowByKeyId, findByKeyId is the internal, unrestricted lookup."""
     ring = PrivateKeyRing(ring_folder)
