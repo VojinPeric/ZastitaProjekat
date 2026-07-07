@@ -113,7 +113,7 @@ class PgpService:
     def send(
         self,
         message: str,
-        output_file_path: str,
+        output_file_path: str, # should be usernmame or email
         *,
         filename: str = "",
         steps: PgpStep | None = None,
@@ -165,7 +165,7 @@ class PgpService:
             payload = self._compatibilityService.encode(payload).encode("ascii")
             appliedSteps |= PgpStep.CONVERSION
 
-        with open(output_file_path, "wb") as file:
+        with open(output_file_path, "wb") as file: # filename should be what is output_file_name now
             file.write(_packContainer(appliedSteps, payload))
 
     # -----------------------------------------------------------------
