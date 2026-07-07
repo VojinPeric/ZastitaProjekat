@@ -764,10 +764,10 @@ class ReceiveMessageTab(ttk.Frame):
             try:
                 result = self.pgpService.receive(path, password=password)
             except Exception as innerError:
-                messagebox.showerror("Greška", str(innerError))
+                messagebox.showerror("Greška", "Problem pri plasiranju poruke: moguci razlozi los format, pogresno enkriptovane vrednosti ili distortovane i ne validne vrednosti, detaljnije: " + str(innerError))
                 return
         except Exception as error:
-            messagebox.showerror("Greška", str(error))
+            messagebox.showerror("Greška", "Problem pri plasiranju poruke: moguci razlozi los format, pogresno enkriptovane vrednosti ili distortovane i ne validne vrednosti, detaljnije: " + str(error))
             return
 
         ReceivedMessageWindow(self, result, self.folder, name)
