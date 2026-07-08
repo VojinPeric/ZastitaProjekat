@@ -1,5 +1,5 @@
 """
-Authentication (signing/verification) step of the PGP scheme.
+Authentication step of the PGP scheme
 
 Signing: SHA-1 hash of the message, RSA signature over that hash with the
 sender's private key.
@@ -9,12 +9,6 @@ The signature packet:
     the signer's key id (least significant 64 bits),
     the leading two octets of the digest,
     signature itself.
-
-Verifying: recompute the SHA-1 hash of the received message and check the RSA
-signature with the sender's public key.
-
-sign/verify work on the SignedMessage structure;
-toBytes/fromBytes turn it into the flat byte stream that the rest of the pipeline passes forward.
 """
 
 import struct
@@ -33,7 +27,6 @@ class AuthenticationService:
         privateKey = serialization.load_pem_private_key(privateKeyPem, password=password)
         # assert isinstance(privateKey, RSAPrivateKey)
 
-        # SHA-1 digest computed once, reused for both the leading octets and the signature
         digest = hashes.Hash(hashes.SHA1())
         digest.update(msg)
         hash_value = digest.finalize()
@@ -44,7 +37,6 @@ class AuthenticationService:
             utils.Prehashed(hashes.SHA1()),
         )
 
-        # keyId = least significant 64 bits of the modulus (same rule as encrypt_message.py)
         public_key = privateKey.public_key()
         modulus = public_key.public_numbers().n
         key_id = (modulus % (2 ** 64)).to_bytes(8, "big")

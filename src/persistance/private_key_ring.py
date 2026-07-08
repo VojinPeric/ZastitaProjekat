@@ -1,13 +1,9 @@
 """
 Private key ring for the PGP scheme.
-
-Holds key pairs that belong to (were generated or imported by) the local
-user: one row per pair, with the private key encrypted at rest -
-E(H(password), PRkey), i.e. PKCS8 PEM encryption, which already derives its
-symmetric key from a password hash. Every operation here is only ever
-allowed on rows owned by the currently active user (row.user_email ==
-UserService().getActiveUser().email); for anything else, look the user up
-through user.py (UserRing).
+Holds key pairs that belong to the local
+user: one row per pair, with the private key encrypted at rest.
+E(H(password), PRkey)(PKCS8 PEM encryption) which already derives its
+symmetric key from a password hash.
 """
 
 import json
@@ -54,14 +50,6 @@ class PrivateKeyRingRow:
 
 
 class PrivateKeyRing:
-    """
-    Singleton wrapping the local private_key_ring.json file. The first call
-    to PrivateKeyRing(folder_path) creates (if missing) and loads the ring
-    file at <folder_path>/private_key_ring.json; every later call from
-    anywhere in the process returns that same instance, regardless of the
-    folder_path passed in.
-    """
-
     _instance = None
 
     def __new__(cls, folder_path: str = None):
@@ -87,9 +75,6 @@ class PrivateKeyRing:
     def resetSingleton(cls) -> None:
         cls._instance = None
 
-    # -----------------------------------------------------------------
-    # persistence
-    # -----------------------------------------------------------------
 
     def _readRows(self) -> list[PrivateKeyRingRow]:
         with open(self.filePath, "r", encoding="ascii") as file:
@@ -100,9 +85,6 @@ class PrivateKeyRing:
         with open(self.filePath, "w", encoding="ascii") as file:
             json.dump([row.to_dict() for row in rows], file, indent=2)
 
-    # -----------------------------------------------------------------
-    # read
-    # -----------------------------------------------------------------
 
     def findByKeyId(self, keyId: bytes) -> PrivateKeyRingRow | None:
         return next((row for row in self.rows if row.key_id == keyId and row.user_email == UserService().getActiveUser().email), None)
@@ -117,19 +99,11 @@ class PrivateKeyRing:
         """All rows owned by active_user."""
         return [row for row in self.rows if row.user_email == UserService().getActiveUser().email]
 
-    # -----------------------------------------------------------------
-    # add
-    # -----------------------------------------------------------------
-
     def generateKeyPair(self, keySize: int, password: bytes) -> PrivateKeyRingRow:
-        """Generate a fresh key pair of size `keySize` and store it, private
-        key encrypted at rest with `password`."""
         privatePem, publicPem = PEMService(key_size=keySize).generateKeyPair()
         return self._storeKeyPair(publicPem, privatePem, password)
 
     def importKeyPair(self, filePath: str, password: bytes) -> PrivateKeyRingRow:
-        """Import a key pair from an (unencrypted) PEM file at `filePath`
-        and store it, private key encrypted at rest with `password`."""
         privatePem, publicPem = PEMService().importFromFile(filePath)
         if privatePem is None:
             raise ValueError("file does not contain a private key")
@@ -161,8 +135,8 @@ class PrivateKeyRing:
 
     def deleteRow(self, keyId: bytes) -> bool:
         """Delete the row for keyId (must belong to active_user), cascading
-        into the public key ring: every row there for this same keyId is
-        also removed."""
+        into the public key ring
+        """
         row = self._requireOwnRow(keyId)
         self.rows.remove(row)
         self._writeRows(self.rows)
@@ -172,17 +146,12 @@ class PrivateKeyRing:
         PublicKeyRing(self.folderPath).deleteAllRowsForKeyId(keyId) 
         return True
 
-    # -----------------------------------------------------------------
-    # export
-    # -----------------------------------------------------------------
 
     def exportPublicKey(self, keyId: bytes, filePath: str) -> None:
         row = self._requireOwnRow(keyId)
         PEMService().exportToFile(filePath, None, row.public_key_pem)
 
     def exportKeyPair(self, keyId: bytes, password: bytes, filePath: str) -> None:
-        """Export the full key pair, decrypting the private key with
-        `password` first (also serves as the password check)."""
         row = self._requireOwnRow(keyId)
         privatePem = self.getDecryptedPrivateKeyPem(keyId, password)
         PEMService().exportToFile(filePath, privatePem, row.public_key_pem)

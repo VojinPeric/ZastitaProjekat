@@ -1,18 +1,8 @@
 """
 Public key ring for the PGP scheme.
 
-The ring is one JSON table: each row is a public key someone has added,
-plus the owner-trust needed to decide how much to
-trust certificates that chain through other people's signatures. It is a
-singleton because the process only ever works against a single ring file
-at a time - we can read anyone's public key to check signatures, but only
-the locally logged-in user (`UserService().getActiveUser()`) can add/remove/sign rows.
-
-Row terminology (matches the original spec):
-    row.user_email  -> email of the User who added this row (the "owner of the row").
-    row.owner_email -> email of the User the key in this row actually belongs to.
-Look up a User's other details (username, message box) through user.py
-(UserRing) if needed - rows here only keep the email.
+row.user_email  -> email of the User who added this row
+row.owner_email -> email of the User the key in this row actually belongs to
 """
 
 import json
@@ -104,13 +94,6 @@ class PublicKeyRingRow:
 
 
 class PublicKeyRing:
-    """
-    Singleton wrapping the local public key ring JSON file. The first call
-    to PublicKeyRing(folder_path) creates (if missing) and loads the ring
-    file at <folder_path>/public_key_ring.json; every later call from
-    anywhere in the process returns that same instance, regardless of the
-    folder_path passed in.
-    """
 
     _instance = None
 
@@ -138,10 +121,6 @@ class PublicKeyRing:
     def resetSingleton(cls) -> None:
         cls._instance = None
 
-    # -----------------------------------------------------------------
-    # persistence
-    # -----------------------------------------------------------------
-
     def _readRows(self) -> list[PublicKeyRingRow]:
         with open(self.filePath, "r", encoding="ascii") as file:
             data = json.load(file)
@@ -151,34 +130,23 @@ class PublicKeyRing:
         with open(self.filePath, "w", encoding="ascii") as file:
             json.dump([row.to_dict() for row in rows], file, indent=2)
 
-    # -----------------------------------------------------------------
-    # read
-    # -----------------------------------------------------------------
 
     def _findRowByKeyId(self, keyId: bytes, email: str) -> PublicKeyRingRow | None:
         return next((row for row in self.rows if row.key_id == keyId and row.user_email == email), None)
 
     def getRowByKeyId(self, keyId: bytes) -> PublicKeyRingRow | None:
-        """Public read: only returns a row belonging to active_user's own
-        ring perspective (row.user_email == active_user.email). Signing
-        bypasses this, since active_user is allowed to sign rows added by
-        other people."""
         row = self._findRowByKeyId(keyId, UserService().getActiveUser().email)
         if row is None:
             return None
         return row
 
     def getAllRows(self) -> list[PublicKeyRingRow]:
-        """All rows added by active_user (row.user_email == active_user.email)."""
         return [row for row in self.rows if row.user_email == UserService().getActiveUser().email]
 
-    # -----------------------------------------------------------------
-    # add
-    # -----------------------------------------------------------------
+
 
     def addRow(self, publicKeyPath: str, keySize: int, ownerEmail: str, ownerTrust: int) -> PublicKeyRingRow:
-        """Add a row for the public key imported from publicKeyPath. Only
-        usable for remote keys: ownerEmail must not be active_user's own."""
+
         if ownerEmail == UserService().getActiveUser().email:
             raise PermissionError("cannot add your own key to the public key ring")
 
@@ -206,13 +174,10 @@ class PublicKeyRing:
         self._writeRows(self.rows)
         return row
 
-    # -----------------------------------------------------------------
-    # delete
-    # -----------------------------------------------------------------
 
     def deleteRow(self, keyId: bytes) -> bool:
-        """Delete the row for keyId, only if active_user is its owner (the
-        one who added it). Also strips every signature made by that key
+        """Delete the row for keyId, only if active_user is its owner.
+        Also strips every signature made by that key
         from every other row, and recalculates their keyLegitimacy."""
         row = self._findRowByKeyId(keyId, UserService().getActiveUser().email)
         if row is None:
@@ -240,14 +205,10 @@ class PublicKeyRing:
             if len(row.signatures) != before:
                 self._recalculateKeyLegitimacy(row)
 
-    # -----------------------------------------------------------------
-    # signing
-    # -----------------------------------------------------------------
 
     def signRow(self, rowOwnerEmail: str, rowKeyId: bytes, signerKeyId: bytes, password: bytes) -> Signature:
         """active_user signs the row identified by rowKeyId, using the key
-        pair signerKeyId (must be active_user's own, found via the private
-        key ring and decrypted with `password`)."""
+        pair signerKeyId."""
         row = self._findRowByKeyId(rowKeyId, rowOwnerEmail)
         if row is None:
             raise ValueError(f"no public key ring row for keyId {rowKeyId.hex()}")
@@ -291,13 +252,6 @@ class PublicKeyRing:
         activeUserEmail = UserService().getActiveUser().email
         if row.user_email == activeUserEmail:
             return True
-        """
-        If active user isn't signing his own row, then active user must have a row which was added
-        by the current row owner and at the same time it is the exact public key with which you want 
-        to sign, because owner trust sets the trust in that specific owners key
-        """
-        # if active user isn't signing his own row, then active user must have a row which was added
-        # by 
         return any(
             other.owner_email == activeUserEmail 
             and other.user_email == row.user_email 
@@ -306,8 +260,6 @@ class PublicKeyRing:
         )
 
     def _signatureTrustFor(self, row: PublicKeyRingRow, signerKeyId: bytes) -> int:
-        """The Owner Trust that row.user_email themselves recorded for the
-        signer's key elsewhere in the ring (0 if they never added it)."""
         if row.user_email == UserService().getActiveUser().email:
             return 1
         signerRow = next(
@@ -316,9 +268,6 @@ class PublicKeyRing:
         )
         return signerRow.owner_trust if signerRow is not None else 0
 
-    # -----------------------------------------------------------------
-    # key legitimacy
-    # -----------------------------------------------------------------
 
     def _recalculateKeyLegitimacy(self, row: PublicKeyRingRow) -> None:
         if row.user_email == UserService().getActiveUser().email:

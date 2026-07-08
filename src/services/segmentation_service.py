@@ -1,13 +1,6 @@
 """
 Segmentation step of the PGP scheme
-
-
-Each segment is self-describing: it starts with an 8-byte header carrying its
-sequence number and the total number of segments:
-
-    +----------------+----------------+------------------------+
-    | index (4 bytes)| total 4 bytes)|   payload (<= maxSize) |
-    +----------------+----------------+------------------------+
+|index (4 bytes)|total 4 bytes|payload (<= maxSize)|
 """
 
 import struct
@@ -41,9 +34,6 @@ class SegmentationService:
         ]
 
     def reassemble(self, segments: list[bytes]) -> bytes:
-        """Join segments back in order using their headers. Works regardless of
-        the order the segments are given in. Raises ValueError if a segment is
-        malformed, or if the set of segments is incomplete/inconsistent."""
         if not segments:
             return b""
 

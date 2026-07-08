@@ -1,17 +1,9 @@
 """
 Top-level PGP service.
 
-Orchestrates the send/receive pipeline for the currently active user, composing
-the per-step services rather than reimplementing them. Which steps run is
-configurable through PgpStep
-
-Send order follows the PGP scheme: authentication (sign) -> compression ->
-encryption (confidentiality) -> radix-64 conversion. Receive reverses it.
-
-On-disk message format (see _packContainer/_unpackContainer):
+On-disk message format:
 |magic (4)|flags (1)|payload (rest)|
 
-`flags` is the PgpStep value of the steps that were actually applied.
 """
 
 import os
@@ -50,9 +42,6 @@ _MESSAGE_HEADER_FORMAT = ">IH"
 _MESSAGE_HEADER_SIZE = 6
 
 class PgpStep(Flag):
-    """Which transformation steps of the PGP pipeline to apply. Combine with
-    `|` (e.g. PgpStep.AUTHENTICATION | PgpStep.ENCRYPTION); PgpStep.NONE is a
-    plain pass-through, PgpStep.ALL runs the whole pipeline."""
     NONE = 0
     AUTHENTICATION = 1
     COMPRESSION = 2
@@ -63,8 +52,8 @@ class PgpStep(Flag):
 
 @dataclass
 class ReceiveResult:
-    """Outcome of receive(): the recovered message plus what was done to it and,
-    if it was signed, whether the signature checks out and who signed it."""
+    """Return for receive(): the recovered message, whatt was done to it,
+    if it was signed:validity and who signed"""
     message: Message
     applied_steps: PgpStep
     signature_valid: bool | None   # None when the message was not signed
@@ -73,17 +62,6 @@ class ReceiveResult:
 
 
 class PgpService:
-    """
-    Per-user entry point to the PGP pipeline. Everything belonging to a user
-    lives under <root_path>/<user email>/:
-
-        <root_path>/<email>/
-            <message files> -> received messages, chosen by the user
-
-    User must be logged in before a PgpService is created. `steps` is the default
-    selection of pipeline steps; send() can override it per message.
-    """
-
     def __init__(self, steps: PgpStep = PgpStep.NONE):
         self._userService = UserService()
         activeUser = self._userService.getActiveUser()
@@ -101,9 +79,6 @@ class PgpService:
         self._compressionService = CompressionService()
         self._compatibilityService = CompatibilityService()
 
-    # -----------------------------------------------------------------
-    # send
-    # -----------------------------------------------------------------
 
     def send(
         self,
@@ -117,13 +92,11 @@ class PgpService:
         recipient_key_id: bytes | None = None,
         algorithm: AlgorithmSymmetric = AlgorithmSymmetric.AES,
     ) -> None:
-        """Protect `message` according to `steps` (defaults to self.steps) and
-        write the resulting self-describing packet to `output_file_path`.
+        """Protect message according to steps (defaults to self.steps) and
+        write the resulting self-describing packet to output_file_path.
 
-        Signing (AUTHENTICATION) needs signer_key_id + signer_password - a key
-        pair from the active user's own private ring. Encryption (ENCRYPTION)
-        needs recipient_key_id - a public key known to the active user (their
-        own, or one imported into the public ring) - and a symmetric algorithm.
+        Signing  needs signer_key_id + signer_password
+        Encryption needs recipient_key_id
         """
         steps = self.steps if steps is None else steps
 
@@ -163,18 +136,13 @@ class PgpService:
         with open(output_file_path, "wb") as file: # filename should be what is output_file_name now
             file.write(_packContainer(appliedSteps, payload))
 
-    # -----------------------------------------------------------------
-    # receive
-    # -----------------------------------------------------------------
+
 
     def receive(self, input_file_path: str, *, password: bytes | None = None) -> ReceiveResult:
         """Read the packet at `input_file_path`, reverse whatever steps it
         records, and return the recovered message plus verification info.
 
-        Decryption needs `password` for the active user's private key. Raises
-        ValueError with a clear message if the file is unrecognized or
-        decryption/decompression fails; signature failure is reported (not
-        raised) via ReceiveResult.signature_valid.
+        Decryption needs `password` for the active user's private key.
         """
         with open(input_file_path, "rb") as file:
             data = file.read()
@@ -217,9 +185,6 @@ class PgpService:
             signer_email=signer_email,
         )
 
-    # -----------------------------------------------------------------
-    # helpers
-    # -----------------------------------------------------------------
 
     def _decrypt(self, payload: bytes, password: bytes | None) -> bytes:
         encrypted = fromBytesToEncryptedMessage(payload)
@@ -251,9 +216,7 @@ class PgpService:
         return None
 
 
-# ---------------------------------------------------------------------
-# container framing
-# ---------------------------------------------------------------------
+
 
 def _packContainer(appliedSteps: PgpStep, payload: bytes) -> bytes:
     return MAGIC + struct.pack(_FLAGS_FORMAT, appliedSteps.value) + payload
@@ -270,10 +233,6 @@ def _unpackContainer(data: bytes) -> tuple[PgpStep, bytes]:
         raise ValueError(f"corrupt PGP message: unknown step flags {flags:#04x}") from error
     return appliedSteps, data[header_size:]
 
-
-# ---------------------------------------------------------------------
-# innermost Message framing
-# ---------------------------------------------------------------------
 
 def _toBytesFromMessage(message: Message) -> bytes:
     filenameBytes = message.filename.encode("utf-8")

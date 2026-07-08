@@ -1,12 +1,3 @@
-"""
-Local user table for the PGP scheme.
-
-UserRing is a singleton wrapping a users.json file, the same pattern as
-PublicKeyRing wraps public_key_ring.json: the first call to
-UserRing(folder_path) creates/loads the file, every later call from
-anywhere in the process returns that same instance.
-"""
-
 import json
 import os
 from dataclasses import dataclass

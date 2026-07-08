@@ -27,9 +27,6 @@ from pgp_messages import AlgorithmSymmetric, ROOT_PATH
 KEY_RING_FOLDER = os.path.join(ROOT_PATH, KEY_RING_DIRNAME)
 
 
-# ---------------------------------------------------------------------
-# pomoćne funkcije
-# ---------------------------------------------------------------------
 
 def askPassword(parent, title="Šifra") -> bytes | None:
     value = simpledialog.askstring(title, "Unesite šifru:", show="*", parent=parent)
@@ -42,9 +39,7 @@ def formatTimestamp(ts) -> str:
     return ts.strftime("%Y-%m-%d %H:%M:%S")
 
 
-# ---------------------------------------------------------------------
-# glavni prozor
-# ---------------------------------------------------------------------
+
 
 class App(tk.Tk):
     def __init__(self):
@@ -75,9 +70,8 @@ class App(tk.Tk):
         self._swapFrame(MainFrame)
 
 
-# ---------------------------------------------------------------------
 # prva stranica: login / register
-# ---------------------------------------------------------------------
+
 
 class LoginFrame(ttk.Frame):
     def __init__(self, app: App):
@@ -124,9 +118,7 @@ class LoginFrame(ttk.Frame):
 
 
 
-# ---------------------------------------------------------------------
 # druga stranica: 4 taba
-# ---------------------------------------------------------------------
 
 class MainFrame(ttk.Frame):
     def __init__(self, app: App):
@@ -161,9 +153,7 @@ class MainFrame(ttk.Frame):
                       lambda e: notebook.nametowidget(notebook.select()).refresh())
 
 
-# ---------------------------------------------------------------------
 # tab 1: Private Key Ring
-# ---------------------------------------------------------------------
 
 class PrivateKeyRingTab(ttk.Frame):
     def __init__(self, parent):
@@ -275,9 +265,7 @@ class PrivateKeyRingTab(ttk.Frame):
             messagebox.showerror("Greška", str(error))
 
 
-# ---------------------------------------------------------------------
 # tab 2: Public Key Ring
-# ---------------------------------------------------------------------
 
 class PublicKeyRingTab(ttk.Frame):
     def __init__(self, parent):
@@ -393,9 +381,7 @@ class PublicKeyRingTab(ttk.Frame):
             messagebox.showerror("Greška", str(error))
 
 
-# ---------------------------------------------------------------------
 # tab 3: Sign Key
-# ---------------------------------------------------------------------
 
 class SignKeyTab(ttk.Frame):
     """
@@ -407,7 +393,6 @@ class SignKeyTab(ttk.Frame):
       - ga je dodao aktivni korisnik (svoj red), ili
       - je korisnik koji je dodao taj red prethodno dodao neki od AKTIVNIH
         korisnikovih ključeva u svoj deo public ringa (i tim ključem se potpisuje)
-    -- ista pravila kao _canSign u core-u.
     """
 
     def __init__(self, parent):
@@ -445,7 +430,6 @@ class SignKeyTab(ttk.Frame):
 
         self.refresh()
 
-    # ------------------------------------------------------------- helpers
 
     def _myKeyIds(self) -> set[bytes]:
         return {row.key_id for row in PrivateKeyRing(KEY_RING_FOLDER).getAllRows()}
@@ -476,7 +460,6 @@ class SignKeyTab(ttk.Frame):
         alreadySigned = {sig.idpu_signature for sig in row.signatures}
         return [keyId for keyId in candidates if keyId not in alreadySigned]
 
-    # ------------------------------------------------------------- UI logika
 
     def refresh(self):
         self.tree.delete(*self.tree.get_children())
@@ -543,9 +526,7 @@ class SignKeyTab(ttk.Frame):
             messagebox.showerror("Greška", str(error))
 
 
-# ---------------------------------------------------------------------
 # tab 3: Send Message
-# ---------------------------------------------------------------------
 
 class SendMessageTab(ttk.Frame):
     def __init__(self, parent, pgpService: PgpService):
@@ -702,9 +683,7 @@ class SendMessageTab(ttk.Frame):
             messagebox.showerror("Greška", str(error))
 
 
-# ---------------------------------------------------------------------
 # tab 4: Receive Message
-# ---------------------------------------------------------------------
 
 class ReceiveMessageTab(ttk.Frame):
     def __init__(self, parent, pgpService: PgpService):
